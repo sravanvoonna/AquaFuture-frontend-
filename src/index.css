@@ -2719,9 +2719,9 @@ ul { list-style: none; }
   position: relative;
   width: 90%;
   max-width: 680px;
-  background: rgba(6, 18, 36, 0.96);
-  backdrop-filter: var(--glass-blur-heavy);
-  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  background: rgba(6, 18, 36, 0.96) !important;
+  backdrop-filter: var(--glass-blur-heavy) !important;
+  -webkit-backdrop-filter: var(--glass-blur-heavy) !important;
   border: 1px solid var(--glass-border-bright);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55), var(--shadow-glow);
   border-radius: var(--border-radius-lg);
@@ -3030,9 +3030,9 @@ ul { list-style: none; }
   position: relative;
   width: 90%;
   max-width: 680px;
-  background: rgba(6, 18, 36, 0.96);
-  backdrop-filter: var(--glass-blur-heavy);
-  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  background: rgba(6, 18, 36, 0.96) !important;
+  backdrop-filter: var(--glass-blur-heavy) !important;
+  -webkit-backdrop-filter: var(--glass-blur-heavy) !important;
   border: 1px solid var(--glass-border-bright);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55), var(--shadow-glow);
   border-radius: var(--border-radius-lg);
