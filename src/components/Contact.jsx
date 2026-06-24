@@ -160,9 +160,52 @@ export default function Contact() {
       .replace(/\n+/g, ' ');
 
     const sarvamApiKey = import.meta.env.VITE_SARVAM_API_KEY;
-    console.log("[SpeakText] Triggered. API Key Present:", !!sarvamApiKey, "Language Selected:", voiceLanguage);
+    console.log("[SpeakText] Triggered. Backend URL:", apiUrl, "API Key Present:", !!sarvamApiKey, "Language Selected:", voiceLanguage);
 
-    if (sarvamApiKey) {
+    if (apiUrl) {
+      try {
+        console.log("[SpeakText] Sending TTS request to backend proxy...");
+        const response = await fetch(`${apiUrl.replace(/\/$/, "")}/api/aquafuture/tts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            text: cleanText,
+            language: voiceLanguage
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Backend TTS proxy returned status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const base64Audio = data.audio;
+        if (!base64Audio) {
+          throw new Error('No audio returned in backend TTS proxy response');
+        }
+
+        console.log("[SpeakText] Received voice audio payload from backend. Initializing playback...");
+        const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
+        audioRef.current = audio;
+        audio.onended = () => {
+          console.log("[SpeakText] Playback ended.");
+          setIsSpeaking(false);
+          audioRef.current = null;
+        };
+        audio.onerror = (e) => {
+          console.error("[SpeakText] Audio playback error, falling back to browser TTS:", e);
+          setIsSpeaking(false);
+          audioRef.current = null;
+          speakLocalText(cleanText);
+        };
+        await audio.play();
+      } catch (err) {
+        console.warn("[SpeakText] Backend TTS proxy failed, falling back to Web Speech API:", err);
+        speakLocalText(cleanText);
+      }
+    } else if (sarvamApiKey) {
       try {
         console.log("[SpeakText] Sending request to Sarvam AI TTS API with speaker 'ishita'...");
         const response = await fetch('https://api.sarvam.ai/text-to-speech', {
@@ -210,7 +253,7 @@ export default function Contact() {
         speakLocalText(cleanText);
       }
     } else {
-      console.log("[SpeakText] No Sarvam API key found. Falling back to local browser TTS.");
+      console.log("[SpeakText] No API URL or Sarvam API key found. Falling back to local browser TTS.");
       speakLocalText(cleanText);
     }
   };
