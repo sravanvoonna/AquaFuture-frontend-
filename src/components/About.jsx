@@ -107,8 +107,9 @@ export default function About() {
     const endpoint = import.meta.env.VITE_AZURE_OPENAI_ENDPOINT;
     const deployment = import.meta.env.VITE_AZURE_OPENAI_DEPLOYMENT;
     const apiVersion = import.meta.env.VITE_AZURE_OPENAI_API_VERSION;
+    const apiUrl = import.meta.env.VITE_API_URL;
 
-    if (!apiKey || !endpoint) {
+    if (!apiUrl && (!apiKey || !endpoint)) {
       setTimeout(() => {
         let localAdvice = `### Water Analysis Status: ${waterStatus.rating} (${waterStatus.score}/100)\n\n`;
         localAdvice += `**Current Position**: Water has ${waterStatus.issues.length > 0 ? waterStatus.issues.join(', ') : 'no major chemical stress parameters'}.\n\n`;
@@ -136,8 +137,29 @@ export default function About() {
     }
 
     try {
-      const url = `${endpoint.replace(/\/$/, "")}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`;
-      const promptText = `Analyze this water quality status:
+      if (apiUrl) {
+        const response = await fetch(`${apiUrl.replace(/\/$/, "")}/api/aquafuture/water-advisory`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ph,
+            doLevel,
+            temp,
+            salinity,
+            score: waterStatus.score,
+            rating: waterStatus.rating,
+            issues: waterStatus.issues
+          })
+        });
+
+        if (!response.ok) throw new Error("API call failed");
+        const resData = await response.json();
+        setAiAdvisory(resData.advice.trim());
+      } else {
+        const url = `${endpoint.replace(/\/$/, "")}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`;
+        const promptText = `Analyze this water quality status:
 - pH Level: ${ph}
 - Dissolved Oxygen (DO): ${doLevel} mg/L
 - Temperature: ${temp}°C
@@ -148,30 +170,31 @@ Identified Issues: ${waterStatus.issues.join(', ') || 'None'}
 
 Provide a brief, professional explanation of the water's present position and list 3-4 specific, actionable steps the aquaculture farmer must take to improve or maintain the water quality. Keep it concise, practical, and highly scientific.`;
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'api-key': apiKey
-        },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a senior marine biologist and aquaculture water quality expert. You give concise chemical and biological pond remedies.'
-            },
-            {
-              role: 'user',
-              content: promptText
-            }
-          ],
-          temperature: 0.3
-        })
-      });
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'api-key': apiKey
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a senior marine biologist and aquaculture water quality expert. You give concise chemical and biological pond remedies.'
+              },
+              {
+                role: 'user',
+                content: promptText
+              }
+            ],
+            temperature: 0.3
+          })
+        });
 
-      if (!response.ok) throw new Error("API call failed");
-      const resData = await response.json();
-      setAiAdvisory(resData.choices[0].message.content.trim());
+        if (!response.ok) throw new Error("API call failed");
+        const resData = await response.json();
+        setAiAdvisory(resData.choices[0].message.content.trim());
+      }
     } catch (err) {
       console.error(err);
       setAiAdvisory("⚠️ Live AI advisory unavailable. Please check your network. Using local parameters recommendations.");

@@ -77,8 +77,9 @@ export default function Services() {
     const endpoint = import.meta.env.VITE_AZURE_OPENAI_ENDPOINT;
     const deployment = import.meta.env.VITE_AZURE_OPENAI_DEPLOYMENT;
     const apiVersion = import.meta.env.VITE_AZURE_OPENAI_API_VERSION;
+    const apiUrl = import.meta.env.VITE_API_URL;
 
-    if (!apiKey || !endpoint) {
+    if (!apiUrl && (!apiKey || !endpoint)) {
       console.warn("Azure OpenAI API credentials missing, running local fallback calculator.");
       // Small simulated delay for realistic feel
       setTimeout(() => {
@@ -89,9 +90,44 @@ export default function Services() {
     }
 
     try {
-      const url = `${endpoint.replace(/\/$/, "")}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`;
-      
-      const promptText = `Generate a customized aquaculture cultivation schedule and planning recommendations for:
+      if (apiUrl) {
+        const response = await fetch(`${apiUrl.replace(/\/$/, "")}/api/aquafuture/schedule`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            serviceTitle: selectedService.title,
+            pondSize,
+            pondDepth,
+            waterSource,
+            aerationPower,
+            stockingDensity,
+            targetWeight
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Backend schedule API error! status: ${response.status}`);
+        }
+
+        const parsedPlan = await response.json();
+
+        setGeneratedPlan({
+          ...parsedPlan,
+          pondSize,
+          pondDepth,
+          waterSource,
+          aerationPower,
+          stockingDensity,
+          targetWeight,
+          serviceTitle: selectedService.title,
+          isAiGenerated: true
+        });
+      } else {
+        const url = `${endpoint.replace(/\/$/, "")}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`;
+        
+        const promptText = `Generate a customized aquaculture cultivation schedule and planning recommendations for:
 Service Type: ${selectedService.title}
 Pond/Farm Parameters:
 - Farm Area: ${pondSize} Acres
@@ -128,53 +164,54 @@ Based on these parameters, perform realistic calculations and generate a detaile
 }
 Ensure the JSON is perfectly valid. Do not include any other text, markdown blocks, or explanation.`;
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'api-key': apiKey
-        },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: 'system',
-              content: 'You are an elite Indian Aquaculture Specialist with expertise in freshwater fish, vannamei shrimp, mud crabs, and marine seaweed farming. You generate custom cultivation timetables and feed recommendations in strict JSON format.'
-            },
-            {
-              role: 'user',
-              content: promptText
-            }
-          ],
-          temperature: 0.3
-        })
-      });
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'api-key': apiKey
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: 'system',
+                content: 'You are an elite Indian Aquaculture Specialist with expertise in freshwater fish, vannamei shrimp, mud crabs, and marine seaweed farming. You generate custom cultivation timetables and feed recommendations in strict JSON format.'
+              },
+              {
+                role: 'user',
+                content: promptText
+              }
+            ],
+            temperature: 0.3
+          })
+        });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const resData = await response.json();
+        const rawContent = resData.choices[0].message.content.trim();
+        
+        // Clean up markdown block formatting if returned by AI
+        let cleanedJson = rawContent;
+        if (cleanedJson.startsWith('```')) {
+          cleanedJson = cleanedJson.replace(/^```json\s*/, '').replace(/```$/, '').trim();
+        }
+
+        const parsedPlan = JSON.parse(cleanedJson);
+
+        setGeneratedPlan({
+          ...parsedPlan,
+          pondSize,
+          pondDepth,
+          waterSource,
+          aerationPower,
+          stockingDensity,
+          targetWeight,
+          serviceTitle: selectedService.title,
+          isAiGenerated: true
+        });
       }
-
-      const resData = await response.json();
-      const rawContent = resData.choices[0].message.content.trim();
-      
-      // Clean up markdown block formatting if returned by AI
-      let cleanedJson = rawContent;
-      if (cleanedJson.startsWith('```')) {
-        cleanedJson = cleanedJson.replace(/^```json\s*/, '').replace(/```$/, '').trim();
-      }
-
-      const parsedPlan = JSON.parse(cleanedJson);
-
-      setGeneratedPlan({
-        ...parsedPlan,
-        pondSize,
-        pondDepth,
-        waterSource,
-        aerationPower,
-        stockingDensity,
-        targetWeight,
-        serviceTitle: selectedService.title,
-        isAiGenerated: true
-      });
     } catch (err) {
       console.error("AI Plan Generation failed, falling back to local formulas:", err);
       setPlanError("AI generation encountered an issue. Loaded regional offline planner instead.");

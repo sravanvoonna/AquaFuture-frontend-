@@ -355,6 +355,7 @@ export default function Technology() {
     const endpoint = import.meta.env.VITE_AZURE_OPENAI_ENDPOINT;
     const deployment = import.meta.env.VITE_AZURE_OPENAI_DEPLOYMENT;
     const apiVersion = import.meta.env.VITE_AZURE_OPENAI_API_VERSION;
+    const apiUrl = import.meta.env.VITE_API_URL;
 
     // Helper to randomize range placeholders in fallback news, e.g. [10-20]
     const randomizeText = (text) => {
@@ -426,7 +427,7 @@ export default function Technology() {
       return;
     }
 
-    if (!apiKey || !endpoint) {
+    if (!apiUrl && (!apiKey || !endpoint)) {
       // Simulate real-time ticking fluctuations offline
       setTimeout(() => {
         const base = fallbackData[stateName];
@@ -473,9 +474,29 @@ export default function Technology() {
     }
 
     try {
-      const url = `${endpoint.replace(/\/$/, "")}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`;
-      
-      const promptText = `Generate live wholesale aquaculture market rates and regional pond warning alerts for the state of: ${stateName}, India.
+      if (apiUrl) {
+        const response = await fetch(`${apiUrl.replace(/\/$/, "")}/api/aquafuture/market-rates`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ stateName })
+        });
+
+        if (!response.ok) throw new Error("API call failed");
+        const parsedFeed = await response.json();
+        
+        setLiveFeed(prev => ({
+          ...prev,
+          [stateName]: {
+            ...parsedFeed,
+            lastUpdated: new Date().toLocaleTimeString()
+          }
+        }));
+      } else {
+        const url = `${endpoint.replace(/\/$/, "")}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`;
+        
+        const promptText = `Generate live wholesale aquaculture market rates and regional pond warning alerts for the state of: ${stateName}, India.
 Current Date: ${new Date().toLocaleDateString('en-IN')}
 
 Return strictly as a JSON object with the following schema:
@@ -491,45 +512,46 @@ Return strictly as a JSON object with the following schema:
 }
 Ensure the JSON is valid. Respond ONLY with the JSON object. Do not include markdown tags like \`\`\`json.`;
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'api-key': apiKey
-        },
-        body: JSON.stringify({
-          messages: [
-            {
-              role: 'system',
-              content: 'You are an Indian seafood market pricing analyst. You generate current market rates and regional salinity/weather alerts in strict JSON format.'
-            },
-            {
-              role: 'user',
-              content: promptText
-            }
-          ],
-          temperature: 0.8
-        })
-      });
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'api-key': apiKey
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: 'system',
+                content: 'You are an Indian seafood market pricing analyst. You generate current market rates and regional salinity/weather alerts in strict JSON format.'
+              },
+              {
+                role: 'user',
+                content: promptText
+              }
+            ],
+            temperature: 0.8
+          })
+        });
 
-      if (!response.ok) throw new Error("API call failed");
-      const resData = await response.json();
-      const rawContent = resData.choices[0].message.content.trim();
-      
-      let cleanedJson = rawContent;
-      if (cleanedJson.startsWith('```')) {
-        cleanedJson = cleanedJson.replace(/^```json\s*/, '').replace(/```$/, '').trim();
-      }
-
-      const parsedFeed = JSON.parse(cleanedJson);
-      
-      setLiveFeed(prev => ({
-        ...prev,
-        [stateName]: {
-          ...parsedFeed,
-          lastUpdated: new Date().toLocaleTimeString()
+        if (!response.ok) throw new Error("API call failed");
+        const resData = await response.json();
+        const rawContent = resData.choices[0].message.content.trim();
+        
+        let cleanedJson = rawContent;
+        if (cleanedJson.startsWith('```')) {
+          cleanedJson = cleanedJson.replace(/^```json\s*/, '').replace(/```$/, '').trim();
         }
-      }));
+
+        const parsedFeed = JSON.parse(cleanedJson);
+        
+        setLiveFeed(prev => ({
+          ...prev,
+          [stateName]: {
+            ...parsedFeed,
+            lastUpdated: new Date().toLocaleTimeString()
+          }
+        }));
+      }
     } catch (err) {
       console.error("AI Feed update failed, running offline generator:", err);
       // Fallback
