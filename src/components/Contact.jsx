@@ -11,7 +11,6 @@ export default function Contact() {
   const sectionRef = useRef(null);
   const messagesEndRef = useRef(null);
   const audioRef = useRef(null);
-  const speechSessionRef = useRef(0);
   
   // Environment credentials
   const apiKey = import.meta.env.VITE_AZURE_OPENAI_KEY;
@@ -161,119 +160,62 @@ export default function Contact() {
       .replace(/\n+/g, ' ');
 
     const sarvamApiKey = import.meta.env.VITE_SARVAM_API_KEY;
-    console.log("[SpeakText] Triggered. Backend URL:", apiUrl, "API Key Present:", !!sarvamApiKey, "Language Selected:", voiceLanguage);
+    console.log("[SpeakText] Triggered. API Key Present:", !!sarvamApiKey, "Language Selected:", voiceLanguage);
 
-    // Split text into sentences (cuts initial latency to < 1.5s)
-    const sentences = cleanText
-      .split(/(?<=[.?!।])\s+/)
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-
-    if (sentences.length === 0) {
-      setIsSpeaking(false);
-      return;
-    }
-
-    const sessionToken = Math.random();
-    speechSessionRef.current = sessionToken;
-    let currentIdx = 0;
-
-    const playNext = async () => {
-      // If session changed/cancelled, stop playing
-      if (speechSessionRef.current !== sessionToken) {
-        return;
-      }
-
-      if (currentIdx >= sentences.length) {
-        setIsSpeaking(false);
-        audioRef.current = null;
-        return;
-      }
-
-      const sentenceText = sentences[currentIdx];
-      currentIdx++;
-
+    if (sarvamApiKey) {
       try {
-        let base64Audio = null;
+        console.log("[SpeakText] Sending request to Sarvam AI TTS API with speaker 'ishita'...");
+        const response = await fetch('https://api.sarvam.ai/text-to-speech', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'api-subscription-key': sarvamApiKey
+          },
+          body: JSON.stringify({
+            text: cleanText,
+            speaker: 'ishita',
+            target_language_code: voiceLanguage,
+            pace: 1.0,
+            model: 'bulbul:v3'
+          })
+        });
 
-        if (apiUrl) {
-          console.log(`[SpeakText] Requesting sentence ${currentIdx}/${sentences.length} from backend proxy: "${sentenceText.slice(0, 30)}..."`);
-          const response = await fetch(`${apiUrl.replace(/\/$/, "")}/api/aquafuture/tts`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              text: sentenceText,
-              language: voiceLanguage
-            })
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            base64Audio = data.audio;
-          } else {
-            console.warn(`[SpeakText] Backend TTS returned status: ${response.status}`);
-          }
-        } else if (sarvamApiKey) {
-          console.log(`[SpeakText] Requesting sentence ${currentIdx}/${sentences.length} from Sarvam direct: "${sentenceText.slice(0, 30)}..."`);
-          const response = await fetch('https://api.sarvam.ai/text-to-speech', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'api-subscription-key': sarvamApiKey
-            },
-            body: JSON.stringify({
-              text: sentenceText,
-              speaker: 'ishita',
-              target_language_code: voiceLanguage,
-              pace: 1.0,
-              model: 'bulbul:v3'
-            })
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            base64Audio = data.audios?.[0];
-          } else {
-            console.warn(`[SpeakText] Sarvam direct TTS returned status: ${response.status}`);
-          }
+        if (!response.ok) {
+          throw new Error(`Sarvam TTS API returned status: ${response.status}`);
         }
 
+        const data = await response.json();
+        const base64Audio = data.audios?.[0];
         if (!base64Audio) {
-          throw new Error("No audio returned in response payload");
+          throw new Error('No audio returned in Sarvam TTS response');
         }
 
-        // Verify session didn't change while waiting for network request
-        if (speechSessionRef.current !== sessionToken) {
-          return;
-        }
-
+        console.log("[SpeakText] Received voice audio payload from Sarvam AI. Initializing playback...");
         const audio = new Audio(`data:audio/wav;base64,${base64Audio}`);
         audioRef.current = audio;
         audio.onended = () => {
-          playNext();
+          console.log("[SpeakText] Playback ended.");
+          setIsSpeaking(false);
+          audioRef.current = null;
         };
         audio.onerror = (e) => {
-          console.error("[SpeakText] Audio playback error, falling back to local TTS for remaining sentences:", e);
-          if (speechSessionRef.current === sessionToken) {
-            speakLocalText(sentences.slice(currentIdx - 1).join(' '));
-          }
+          console.error("[SpeakText] Audio playback error, falling back to browser TTS:", e);
+          setIsSpeaking(false);
+          audioRef.current = null;
+          speakLocalText(cleanText);
         };
         await audio.play();
       } catch (err) {
-        console.warn("[SpeakText] Sequential TTS failed, falling back to local TTS for remaining:", err);
-        if (speechSessionRef.current === sessionToken) {
-          speakLocalText(sentences.slice(currentIdx - 1).join(' '));
-        }
+        console.warn("[SpeakText] Sarvam TTS request failed, falling back to Web Speech API:", err);
+        speakLocalText(cleanText);
       }
-    };
-
-    playNext();
+    } else {
+      console.log("[SpeakText] No Sarvam API key found. Falling back to local browser TTS.");
+      speakLocalText(cleanText);
+    }
   };
 
   const stopSpeaking = () => {
-    speechSessionRef.current = 0;
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
