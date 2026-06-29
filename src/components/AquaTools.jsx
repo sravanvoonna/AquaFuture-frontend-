@@ -67,6 +67,86 @@ export default function AquaTools() {
   const [predPrice, setPredPrice] = useState(15000); // ₹/quintal
   const [predFeedCost, setPredFeedCost] = useState(8000); // ₹/quintal
 
+  // --- Premium IoT Live Simulation States ---
+  const [isLiveMode, setIsLiveMode] = useState(false);
+  const [aerator1, setAerator1] = useState(false);
+  const [aerator2, setAerator2] = useState(false);
+  const [waterExchange, setWaterExchange] = useState(false);
+  const [bioFilter, setBioFilter] = useState(false);
+  const [bufferPump, setBufferPump] = useState(false);
+
+  // --- Premium Disease Diagnostician States ---
+  const [wizardStep, setWizardStep] = useState(1); // 1, 2, 3
+  const [diagSpecies, setDiagSpecies] = useState('tilapia');
+  const [symptomChecklist, setSymptomChecklist] = useState({
+    lethargy: false,
+    surface_gasping: false,
+    flashing: false,
+    anorexia: false,
+    white_spots: false,
+    frayed_fins: false,
+    cloudy_eyes: false,
+    gills_rot: false,
+    cotton_growths: false,
+    black_shell: false
+  });
+
+  // --- Premium Feed ROI States ---
+  const [roiSpecies, setRoiSpecies] = useState('tilapia');
+  const [roiStockCount, setRoiStockCount] = useState(10000);
+  const [roiHarvestPrice, setRoiHarvestPrice] = useState(15000);
+  const [roiBaseFeedCost, setRoiBaseFeedCost] = useState(8000);
+
+  // IoT Live Simulation loop hook
+  useEffect(() => {
+    if (!isLiveMode) return;
+
+    const interval = setInterval(() => {
+      // 1. Natural Drift: Random walk parameters
+      let newDO = diagDO + (Math.random() - 0.53) * 0.22; 
+      let newTAN = diagAmmonia + (Math.random() - 0.47) * 0.04;
+      let newPH = diagPH + (Math.random() - 0.5) * 0.08;
+      let newTemp = diagTemp + (Math.random() - 0.5) * 0.25;
+      let newSalinity = diagSalinity + (Math.random() - 0.5) * 0.35;
+
+      // 2. Adjustments based on active overrides
+      if (aerator1) {
+        newDO += 0.35;
+        newTAN -= 0.005;
+      }
+      if (aerator2) {
+        newDO += 0.35;
+        newTAN -= 0.005;
+      }
+      if (waterExchange) {
+        newTAN -= 0.07;
+        newTemp += (26 - newTemp) * 0.15;
+        newSalinity += (15 - newSalinity) * 0.15;
+        newDO += (6.5 - newDO) * 0.15;
+      }
+      if (bioFilter) {
+        newTAN -= 0.08;
+      }
+      if (bufferPump) {
+        newPH += (7.2 - newPH) * 0.18;
+      }
+
+      // Constrain ranges
+      newDO = Math.max(0, Math.min(15, newDO));
+      newTAN = Math.max(0, Math.min(3.0, newTAN));
+      newPH = Math.max(4.0, Math.min(10.0, newPH));
+      newTemp = Math.max(8, Math.min(36, newTemp));
+      newSalinity = Math.max(0, Math.min(40, newSalinity));
+
+      setDiagDO(parseFloat(newDO.toFixed(2)));
+      setDiagAmmonia(parseFloat(newTAN.toFixed(3)));
+      setDiagPH(parseFloat(newPH.toFixed(2)));
+      setDiagTemp(Math.round(newTemp));
+      setDiagSalinity(Math.round(newSalinity));
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [isLiveMode, aerator1, aerator2, waterExchange, bioFilter, bufferPump, diagDO, diagAmmonia, diagPH, diagTemp, diagSalinity]);
 
   // ==========================================
   // CALCULATIONS
@@ -300,6 +380,242 @@ export default function AquaTools() {
 
   const predResult = computePredictorProjections();
 
+  // --- Core Logic for Disease Diagnosis ---
+  const computeProb = (diseaseSymptoms, checkedSymptoms) => {
+    if (checkedSymptoms.length === 0) return 0;
+    let matches = 0;
+    diseaseSymptoms.forEach(s => {
+      if (checkedSymptoms.includes(s)) matches++;
+    });
+    const matchRatio = matches / diseaseSymptoms.length;
+    const specificity = matches / checkedSymptoms.length;
+    return Math.round((matchRatio * 0.7 + specificity * 0.3) * 100);
+  };
+
+  const performDiseaseDiagnosis = () => {
+    const checked = Object.keys(symptomChecklist).filter(k => symptomChecklist[k]);
+    let diseases = [];
+    if (diagSpecies === 'tilapia') {
+      diseases = [
+        {
+          name: 'Ichthyophthiriasis (Ich / White Spot)',
+          probability: computeProb(['white_spots', 'flashing', 'surface_gasping'], checked),
+          desc: 'A widespread parasitic skin disease caused by Ichthyophthirius multifiliis. It causes rapid gill damage and skin irritation.',
+          presTitle: 'Salt Bath & Thermal Regulation',
+          presDose: '3.0 - 5.0 kg of NaCl per m³',
+          presInst: 'Maintain standard stocking limits. Slowly dose non-iodized pond salt. For RAS systems, raise temperature gradually to 28-30°C to speed up parasite lifecycle and flush water filter.',
+          dosePerM3: 4.0,
+          doseUnit: 'kg'
+        },
+        {
+          name: 'Columnaris (Saddleback / Gill Rot)',
+          probability: computeProb(['gills_rot', 'cotton_growths', 'anorexia'], checked),
+          desc: 'A common bacterial infection caused by Flavobacterium columnare. Highly contagious under high stocking density and high temperatures.',
+          presTitle: 'Antibacterial Treatment & Volume Buffer',
+          presDose: '2.5g copper sulfate (CuSO4) per m³',
+          presInst: 'Stop feeding for 48 hours. Maximize aeration as gill tissues are damaged. Buffer pH to 7.2 using lime before treatment. Perform a 30% water exchange after 4 days.',
+          dosePerM3: 0.0025,
+          doseUnit: 'kg'
+        },
+        {
+          name: 'Streptococcal Infection',
+          probability: computeProb(['lethargy', 'anorexia', 'cloudy_eyes'], checked),
+          desc: 'A severe warmwater bacterial disease causing systemic septicemia, bulging eyes, and spiral swimming behavior.',
+          presTitle: 'Probiotic Supplement & Bio-security',
+          presDose: '5.0g active Bacillus probiotics per m³',
+          presInst: 'Reduce water temperature if possible. Incorporate feed-grade erythromycin (or veterinary approved antibiotic) into feed. Stop organic waste piling on pond floor.',
+          dosePerM3: 0.005,
+          doseUnit: 'kg'
+        }
+      ];
+    } else if (diagSpecies === 'salmon') {
+      diseases = [
+        {
+          name: 'Salmon Rickettsial Syndrome (SRS)',
+          probability: computeProb(['lethargy', 'anorexia', 'cloudy_eyes', 'frayed_fins'], checked),
+          desc: 'An intracellular bacterial disease causing severe hemorrhages, lethargy, and anemia in coldwater salmonids.',
+          presTitle: 'Medicated Feed Therapy',
+          presDose: '75mg antibiotic per kg of biomass daily',
+          presInst: 'Quarantine infected net pens immediately. Treat feed under strict guidance. Optimize dissolved oxygen above 7.0 mg/L to support fish immune metabolism.',
+          dosePerM3: 0,
+          doseUnit: 'N/A'
+        },
+        {
+          name: 'Sea Lice Infestation',
+          probability: computeProb(['flashing', 'frayed_fins', 'lethargy'], checked),
+          desc: 'Marine ectoparasitic copepods that attach to the skin and mucus of salmon, causing lesions, secondary infections, and severe osmotic imbalance.',
+          presTitle: 'Hydrogen Peroxide (H2O2) Bath',
+          presDose: '1.5 - 2.0g hydrogen peroxide (35%) per Liter',
+          presInst: 'Administer short-term bath treatment (20 minutes) under high aeration control. Monitor water temperature closely (avoid treatment above 14°C).',
+          dosePerM3: 1.75,
+          doseUnit: 'g'
+        },
+        {
+          name: 'Furunculosis',
+          probability: computeProb(['frayed_fins', 'lethargy', 'anorexia', 'gills_rot'], checked),
+          desc: 'A destructive bacterial disease causing boil-like lesions (furuncles) on muscles, bloody fin bases, and sudden mortality.',
+          presTitle: 'Water Disinfectant Therapy',
+          presDose: '12g treatment powder per m³ of water',
+          presInst: 'Vaccinate upcoming cohorts. Clean nets to maximize water circulation. Disinfect tools with organic iodine solution.',
+          dosePerM3: 0.012,
+          doseUnit: 'kg'
+        }
+      ];
+    } else if (diagSpecies === 'shrimp') {
+      diseases = [
+        {
+          name: 'White Spot Syndrome Virus (WSSV)',
+          probability: computeProb(['white_spots', 'lethargy', 'anorexia'], checked),
+          desc: 'A highly lethal viral pathogen of shrimp. Causes distinct circular white calcium deposits under the carapace and rapid crop die-off within 3 to 10 days.',
+          presTitle: 'Biosecurity & High-Aerate Quarantine',
+          presDose: 'Halt discharge & dose 5.0g active iodine sanitizer per m³',
+          presInst: 'EMERGENCY: Halt all water discharge to avoid spreading. Increase aeration to max capacity. Dose organic vitamin C at 5g/kg feed to boost surviving stock immunity.',
+          dosePerM3: 0.005,
+          doseUnit: 'kg'
+        },
+        {
+          name: 'Early Mortality Syndrome (EMS / AHPND)',
+          probability: computeProb(['lethargy', 'anorexia', 'black_shell'], checked),
+          desc: 'Acute Hepatopancreatic Necrosis Disease, caused by toxin-producing strains of Vibrio parahaemolyticus. Shrimp die off in the first 30 days of stocking.',
+          presTitle: 'Carbon-Nitrogen Balancing & Probiotic Dosing',
+          presDose: '15g Molasses + 6g Bacillus probiotic cultures per m³',
+          presInst: 'Boost C:N ratio by dosing carbon sources (molasses). Seed beneficial bacteria to outcompete Vibrio strains. Clean pond bottoms daily (sludge siphoning).',
+          dosePerM3: 0.021,
+          doseUnit: 'kg'
+        },
+        {
+          name: 'Black Gill Disease',
+          probability: computeProb(['black_shell', 'surface_gasping'], checked),
+          desc: 'Melanization of shrimp gills caused by fungal spore attachment or severe accumulation of organic sludge on pond floors.',
+          presTitle: 'Sludge Flushing & Copper Chelate Dosing',
+          presDose: '0.5g chelated copper per m³',
+          presInst: 'Perform urgent water exchange (20-30%). Use siphon tools to remove accumulated feces and uneaten feed from the tank bottom. Increase aeration.',
+          dosePerM3: 0.0005,
+          doseUnit: 'kg'
+        }
+      ];
+    } else if (diagSpecies === 'catfish') {
+      diseases = [
+        {
+          name: 'Enteric Septicemia of Catfish (ESC)',
+          probability: computeProb(['lethargy', 'anorexia', 'cloudy_eyes'], checked),
+          desc: 'A major bacterial disease of catfish, often called "Hole-in-the-Head" due to characteristic ulcerations on the skull. Catfish hang vertically at the surface.',
+          presTitle: 'Medicated Feed & Feed Limitation',
+          presDose: '50mg Terramycin per kg of fish biomass daily',
+          presInst: 'Reduce feeding rate by 80% during active mortality. Clean water filters. Do not attempt treatment when water temperatures are between 22-28°C (ESC growth window).',
+          dosePerM3: 0,
+          doseUnit: 'N/A'
+        },
+        {
+          name: 'Catfish Ich',
+          probability: computeProb(['white_spots', 'flashing', 'surface_gasping'], checked),
+          desc: 'Protozoan parasite causing heavy white spots. Catfish exhibit extreme irritation, flashing against gravel, and gill congestion.',
+          presTitle: 'Formalin & Malachite Green Therapy',
+          presDose: '20 mL formalin per m³ of water volume',
+          presInst: 'Apply treatment on alternate days for a total of 3 treatments. Ensure maximum aeration as formalin binds dissolved oxygen.',
+          dosePerM3: 0.02,
+          doseUnit: 'L'
+        },
+        {
+          name: 'Columnaris (Mouth Rot)',
+          probability: computeProb(['cotton_growths', 'gills_rot', 'anorexia'], checked),
+          desc: 'Bacterial infection resulting in yellowish cotton-like lesions around the mouth, skin margins, and gills.',
+          presTitle: 'Potassium Permanganate (KMnO4) Dosing',
+          presDose: '2.0g Potassium Permanganate per m³ of water',
+          presInst: 'Apply KMnO4 bath treatment in early morning when dissolved oxygen is high. Discontinue feeding until mortality ceases. Clean bottom debris.',
+          dosePerM3: 0.002,
+          doseUnit: 'kg'
+        }
+      ];
+    }
+
+    diseases.sort((a, b) => b.probability - a.probability);
+    if (checked.length === 0) {
+      diseases.forEach(d => { d.probability = 0; });
+    }
+    return diseases;
+  };
+
+  const diseaseDiagnosisResult = performDiseaseDiagnosis();
+
+  // --- Core Logic for Feed ROI Analyzer ---
+  const computeFeedROICalculations = () => {
+    const targetW = SPECIES_PRESETS[roiSpecies].targetWeight;
+    const finalBiomassQtl = (roiStockCount * targetW) / 100000;
+    const grossRevenue = finalBiomassQtl * roiHarvestPrice;
+    const targetFCR = SPECIES_PRESETS[roiSpecies].targetFCR;
+    
+    const econFCR = targetFCR + 0.35;
+    const stdFCR = targetFCR;
+    const premFCR = Math.max(0.95, targetFCR - 0.15);
+    
+    const econCostPerQtl = roiBaseFeedCost * 0.65;
+    const stdCostPerQtl = roiBaseFeedCost;
+    const premCostPerQtl = roiBaseFeedCost * 1.35;
+    
+    const econFeedNeeded = finalBiomassQtl * econFCR;
+    const stdFeedNeeded = finalBiomassQtl * stdFCR;
+    const premFeedNeeded = finalBiomassQtl * premFCR;
+    
+    const econTotalFeedCost = econFeedNeeded * econCostPerQtl;
+    const stdTotalFeedCost = stdFeedNeeded * stdCostPerQtl;
+    const premTotalFeedCost = premFeedNeeded * premCostPerQtl;
+    
+    const baseWeeks = { tilapia: 24, salmon: 32, shrimp: 16, catfish: 28 };
+    const stdWeeks = baseWeeks[roiSpecies] || 24;
+    const econWeeks = Math.round(stdWeeks * 1.15);
+    const premWeeks = Math.round(stdWeeks * 0.82);
+    
+    const econProfit = grossRevenue - econTotalFeedCost;
+    const stdProfit = grossRevenue - stdTotalFeedCost;
+    const premProfit = grossRevenue - premTotalFeedCost;
+    
+    const econROI = econTotalFeedCost > 0 ? (econProfit / econTotalFeedCost) * 100 : 0;
+    const stdROI = stdTotalFeedCost > 0 ? (stdProfit / stdTotalFeedCost) * 100 : 0;
+    const premROI = premTotalFeedCost > 0 ? (premProfit / premTotalFeedCost) * 100 : 0;
+    
+    let recommended = 'standard';
+    if (premProfit > stdProfit && premProfit > econProfit) {
+      recommended = 'premium';
+    } else if (econProfit > stdProfit && econProfit > premProfit) {
+      recommended = 'economy';
+    }
+    
+    return {
+      finalBiomassQtl: finalBiomassQtl.toFixed(1),
+      grossRevenue: grossRevenue.toFixed(0),
+      tiers: {
+        economy: {
+          fcr: econFCR.toFixed(2),
+          totalFeed: econFeedNeeded.toFixed(1),
+          feedCost: econTotalFeedCost.toFixed(0),
+          weeks: econWeeks,
+          profit: econProfit.toFixed(0),
+          roi: econROI.toFixed(0)
+        },
+        standard: {
+          fcr: stdFCR.toFixed(2),
+          totalFeed: stdFeedNeeded.toFixed(1),
+          feedCost: stdTotalFeedCost.toFixed(0),
+          weeks: stdWeeks,
+          profit: stdProfit.toFixed(0),
+          roi: stdROI.toFixed(0)
+        },
+        premium: {
+          fcr: premFCR.toFixed(2),
+          totalFeed: premFeedNeeded.toFixed(1),
+          feedCost: premTotalFeedCost.toFixed(0),
+          weeks: premWeeks,
+          profit: premProfit.toFixed(0),
+          roi: premROI.toFixed(0)
+        }
+      },
+      recommended
+    };
+  };
+
+  const roiResult = computeFeedROICalculations();
+
 
   return (
     <section className="tools-section" id="tools" ref={sectionRef}>
@@ -337,6 +653,12 @@ export default function AquaTools() {
           >
             📈 Growth & Revenue Predictor
           </button>
+          <button
+            className={`tools-tab-btn ${activeTab === 'disease' ? 'active' : ''}`}
+            onClick={() => setActiveTab('disease')}
+          >
+            🩺 Disease Diagnostician
+          </button>
         </div>
 
         {/* TAB 1: SMART CALCULATORS (Option 1) */}
@@ -361,6 +683,12 @@ export default function AquaTools() {
                 onClick={() => setCalcSubTab('feed')}
               >
                 🌾 Feed Predictor
+              </button>
+              <button
+                className={`tools-subtab-btn ${calcSubTab === 'roi' ? 'active' : ''}`}
+                onClick={() => setCalcSubTab('roi')}
+              >
+                📊 Feed ROI Analyzer
               </button>
             </div>
 
@@ -698,6 +1026,218 @@ export default function AquaTools() {
                 </div>
               </div>
             )}
+
+            {/* Feed ROI Calculator Layout */}
+            {calcSubTab === 'roi' && (
+              <div className="roi-deck-container">
+                <div className="roi-inputs-bar">
+                  <div className="form-group">
+                    <label>Target Species</label>
+                    <select value={roiSpecies} onChange={(e) => setRoiSpecies(e.target.value)}>
+                      <option value="tilapia">Nile Tilapia (Standard FCR: 1.3)</option>
+                      <option value="salmon">Atlantic Salmon (Standard FCR: 1.15)</option>
+                      <option value="shrimp">White Shrimp (Standard FCR: 1.5)</option>
+                      <option value="catfish">African Catfish (Standard FCR: 1.45)</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Stocking Quantity (Count): {roiStockCount.toLocaleString()} fingerlings</label>
+                    <input
+                      type="range"
+                      min="1000"
+                      max="100000"
+                      step="1000"
+                      value={roiStockCount}
+                      onChange={(e) => setRoiStockCount(parseInt(e.target.value))}
+                    />
+                  </div>
+                  <div className="form-group-split">
+                    <div className="form-group">
+                      <label>Harvest selling price (₹/Qtl)</label>
+                      <input
+                        type="number"
+                        min="1000"
+                        max="100000"
+                        step="100"
+                        value={roiHarvestPrice}
+                        onChange={(e) => setRoiHarvestPrice(Math.max(1000, parseInt(e.target.value) || 0))}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Base Feed Cost (₹/Qtl)</label>
+                      <input
+                        type="number"
+                        min="1000"
+                        max="50000"
+                        step="100"
+                        value={roiBaseFeedCost}
+                        onChange={(e) => setRoiBaseFeedCost(Math.max(1000, parseInt(e.target.value) || 0))}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="roi-cards-row">
+                  {/* Economy Card */}
+                  <div className={`roi-feed-card ${roiResult.recommended === 'economy' ? 'recommended' : ''}`}>
+                    <div className="roi-card-header">
+                      <span className="roi-tier-name">Economy Grade Feed</span>
+                      <p className="roi-tier-desc">Standard low-protein formulation</p>
+                    </div>
+                    <div className="roi-primary-metric">
+                      {roiResult.tiers.economy.roi}%
+                    </div>
+                    <span className="roi-primary-label">Estimated Feed ROI</span>
+                    <div className="roi-card-divider"></div>
+                    <div className="roi-card-details">
+                      <div className="roi-detail-item">
+                        <span>FCR Baseline:</span>
+                        <strong>{roiResult.tiers.economy.fcr}</strong>
+                      </div>
+                      <div className="roi-detail-item">
+                        <span>Total Feed Needed:</span>
+                        <strong>{roiResult.tiers.economy.totalFeed} qtl</strong>
+                      </div>
+                      <div className="roi-detail-item">
+                        <span>Total Feed Expense:</span>
+                        <strong>₹{parseInt(roiResult.tiers.economy.feedCost).toLocaleString('en-IN')}</strong>
+                      </div>
+                      <div className="roi-detail-item">
+                        <span>Grow-out Duration:</span>
+                        <strong style={{ color: 'var(--coral)' }}>{roiResult.tiers.economy.weeks} Weeks (+15%)</strong>
+                      </div>
+                      <div className="roi-detail-item">
+                        <span>Net Profit:</span>
+                        <strong>₹{parseInt(roiResult.tiers.economy.profit).toLocaleString('en-IN')}</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Standard Card */}
+                  <div className={`roi-feed-card ${roiResult.recommended === 'standard' ? 'recommended' : ''}`}>
+                    <div className="roi-card-header">
+                      <span className="roi-tier-name">Standard Grade Feed</span>
+                      <p className="roi-tier-desc">Balanced nutrition profile</p>
+                    </div>
+                    <div className="roi-primary-metric">
+                      {roiResult.tiers.standard.roi}%
+                    </div>
+                    <span className="roi-primary-label">Estimated Feed ROI</span>
+                    <div className="roi-card-divider"></div>
+                    <div className="roi-card-details">
+                      <div className="roi-detail-item">
+                        <span>FCR Baseline:</span>
+                        <strong>{roiResult.tiers.standard.fcr}</strong>
+                      </div>
+                      <div className="roi-detail-item">
+                        <span>Total Feed Needed:</span>
+                        <strong>{roiResult.tiers.standard.totalFeed} qtl</strong>
+                      </div>
+                      <div className="roi-detail-item">
+                        <span>Total Feed Expense:</span>
+                        <strong>₹{parseInt(roiResult.tiers.standard.feedCost).toLocaleString('en-IN')}</strong>
+                      </div>
+                      <div className="roi-detail-item">
+                        <span>Grow-out Duration:</span>
+                        <strong>{roiResult.tiers.standard.weeks} Weeks (Std)</strong>
+                      </div>
+                      <div className="roi-detail-item">
+                        <span>Net Profit:</span>
+                        <strong>₹{parseInt(roiResult.tiers.standard.profit).toLocaleString('en-IN')}</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Premium Card */}
+                  <div className={`roi-feed-card ${roiResult.recommended === 'premium' ? 'recommended' : ''}`}>
+                    <div className="roi-card-header">
+                      <span className="roi-tier-name">Premium Growth Feed</span>
+                      <p className="roi-tier-desc">High-protein growth stimulants</p>
+                    </div>
+                    <div className="roi-primary-metric">
+                      {roiResult.tiers.premium.roi}%
+                    </div>
+                    <span className="roi-primary-label">Estimated Feed ROI</span>
+                    <div className="roi-card-divider"></div>
+                    <div className="roi-card-details">
+                      <div className="roi-detail-item">
+                        <span>FCR Baseline:</span>
+                        <strong>{roiResult.tiers.premium.fcr}</strong>
+                      </div>
+                      <div className="roi-detail-item">
+                        <span>Total Feed Needed:</span>
+                        <strong>{roiResult.tiers.premium.totalFeed} qtl</strong>
+                      </div>
+                      <div className="roi-detail-item">
+                        <span>Total Feed Expense:</span>
+                        <strong>₹{parseInt(roiResult.tiers.premium.feedCost).toLocaleString('en-IN')}</strong>
+                      </div>
+                      <div className="roi-detail-item">
+                        <span>Grow-out Duration:</span>
+                        <strong style={{ color: 'var(--aqua-primary)' }}>{roiResult.tiers.premium.weeks} Weeks (-18%)</strong>
+                      </div>
+                      <div className="roi-detail-item">
+                        <span>Net Profit:</span>
+                        <strong>₹{parseInt(roiResult.tiers.premium.profit).toLocaleString('en-IN')}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="roi-charts-panel glass-card">
+                  <h3 style={{ textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--aqua-bright)' }}>📈 Brand ROI Profitability Comparison</h3>
+                  <div className="roi-comparison-chart-wrapper">
+                    {/* Economy row */}
+                    <div className="roi-bar-row">
+                      <div className="roi-bar-labels">
+                        <span className="roi-bar-name">Economy Feed Profit</span>
+                        <span className="roi-bar-val">₹{parseInt(roiResult.tiers.economy.profit).toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="roi-bar-track">
+                        <div 
+                          className="roi-bar-fill economy" 
+                          style={{ 
+                            width: `${Math.max(10, Math.min(100, (parseFloat(roiResult.tiers.economy.profit) / Math.max(1, parseFloat(roiResult.tiers.premium.profit), parseFloat(roiResult.tiers.standard.profit))) * 100))}%` 
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Standard row */}
+                    <div className="roi-bar-row">
+                      <div className="roi-bar-labels">
+                        <span className="roi-bar-name">Standard Feed Profit</span>
+                        <span className="roi-bar-val">₹{parseInt(roiResult.tiers.standard.profit).toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="roi-bar-track">
+                        <div 
+                          className="roi-bar-fill standard" 
+                          style={{ 
+                            width: `${Math.max(10, Math.min(100, (parseFloat(roiResult.tiers.standard.profit) / Math.max(1, parseFloat(roiResult.tiers.premium.profit), parseFloat(roiResult.tiers.standard.profit))) * 100))}%` 
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Premium row */}
+                    <div className="roi-bar-row">
+                      <div className="roi-bar-labels">
+                        <span className="roi-bar-name">Premium Feed Profit</span>
+                        <span className="roi-bar-val">₹{parseInt(roiResult.tiers.premium.profit).toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="roi-bar-track">
+                        <div 
+                          className="roi-bar-fill premium" 
+                          style={{ 
+                            width: `${Math.max(10, Math.min(100, (parseFloat(roiResult.tiers.premium.profit) / Math.max(1, parseFloat(roiResult.tiers.premium.profit), parseFloat(roiResult.tiers.standard.profit))) * 100))}%` 
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -706,118 +1246,214 @@ export default function AquaTools() {
           <div className="tools-content-wrapper">
             <div className="tool-grid">
               <div className="tool-panel glass-card">
-                <h3>Live Sensor Sliders</h3>
-                
-                <div className="form-group slider-group">
-                  <div className="slider-label-row">
-                    <label>Dissolved Oxygen (DO)</label>
-                    <span className="slider-value" style={{ color: diagDO < 4.0 ? 'var(--coral)' : 'var(--aqua-primary)' }}>
-                      {diagDO.toFixed(1)} mg/L
-                    </span>
+                <h3>Live Sensor Telemetry</h3>
+
+                {/* IoT Simulator Switch */}
+                <div className="live-mode-toggle-container">
+                  <div className="live-mode-title-area">
+                    <div className={isLiveMode ? "live-indicator-pulsing" : ""} style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: isLiveMode ? 'var(--aqua-glow)' : 'rgba(255,255,255,0.2)', transition: 'background-color 0.3s' }} />
+                    <div className="live-mode-text-details" style={{ textAlign: 'left' }}>
+                      <span className="live-mode-status-text">
+                        {isLiveMode ? "🔌 Live IoT Telemetry Mode" : "⚙️ Manual Calibration Mode"}
+                      </span>
+                      <p className="live-mode-status-sub">
+                        {isLiveMode ? "Active real-time pond sensors feed" : "Adjust inputs manually to evaluate thresholds"}
+                      </p>
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="15"
-                    step="0.1"
-                    value={diagDO}
-                    onChange={(e) => setDiagDO(parseFloat(e.target.value))}
-                  />
-                  <div className="slider-limits">
-                    <span>Critical (&lt;3.0)</span>
-                    <span>Ideal (5.0+)</span>
+                  <button 
+                    className={`iot-switch-btn ${isLiveMode ? 'active' : ''}`}
+                    onClick={() => {
+                      setIsLiveMode(!isLiveMode);
+                      // Reset overrides when toggling
+                      setAerator1(false);
+                      setAerator2(false);
+                      setWaterExchange(false);
+                      setBioFilter(false);
+                      setBufferPump(false);
+                    }}
+                  >
+                    <div className="iot-switch-dot" />
+                  </button>
+                </div>
+
+                <div className={`scanline-overlay-container ${isLiveMode ? 'scanline-active' : ''}`} style={{ opacity: isLiveMode ? 0.85 : 1, pointerEvents: isLiveMode ? 'none' : 'auto', transition: 'all 0.3s' }}>
+                  <div className="form-group slider-group">
+                    <div className="slider-label-row">
+                      <label>Dissolved Oxygen (DO)</label>
+                      <span className="slider-value" style={{ color: diagDO < 4.0 ? 'var(--coral)' : 'var(--aqua-primary)' }}>
+                        {diagDO.toFixed(2)} mg/L
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="15"
+                      step="0.1"
+                      value={diagDO}
+                      onChange={(e) => setDiagDO(parseFloat(e.target.value))}
+                      disabled={isLiveMode}
+                    />
+                    <div className="slider-limits">
+                      <span>Critical (&lt;3.0)</span>
+                      <span>Ideal (5.0+)</span>
+                    </div>
+                  </div>
+
+                  <div className="form-group slider-group">
+                    <div className="slider-label-row">
+                      <label>Ammonia Nitrogen (TAN)</label>
+                      <span className="slider-value" style={{ color: diagAmmonia > 0.2 ? 'var(--coral)' : 'var(--aqua-primary)' }}>
+                        {diagAmmonia.toFixed(3)} mg/L
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="3.0"
+                      step="0.01"
+                      value={diagAmmonia}
+                      onChange={(e) => setDiagAmmonia(parseFloat(e.target.value))}
+                      disabled={isLiveMode}
+                    />
+                    <div className="slider-limits">
+                      <span>Ideal (&lt;0.05)</span>
+                      <span>Toxic (&gt;0.5)</span>
+                    </div>
+                  </div>
+
+                  <div className="form-group slider-group">
+                    <div className="slider-label-row">
+                      <label>pH Level</label>
+                      <span className="slider-value" style={{ color: (diagPH < 6.5 || diagPH > 8.5) ? 'var(--coral)' : 'var(--aqua-primary)' }}>
+                        {diagPH.toFixed(2)}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="4.0"
+                      max="10.0"
+                      step="0.1"
+                      value={diagPH}
+                      onChange={(e) => setDiagPH(parseFloat(e.target.value))}
+                      disabled={isLiveMode}
+                    />
+                    <div className="slider-limits">
+                      <span>Acidic (&lt;6.5)</span>
+                      <span>Neutral (7.0)</span>
+                      <span>Alkaline (&gt;8.5)</span>
+                    </div>
+                  </div>
+
+                  <div className="form-group slider-group">
+                    <div className="slider-label-row">
+                      <label>Water Temperature</label>
+                      <span className="slider-value">{diagTemp} °C</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="8"
+                      max="36"
+                      step="1"
+                      value={diagTemp}
+                      onChange={(e) => setDiagTemp(parseInt(e.target.value))}
+                      disabled={isLiveMode}
+                    />
+                    <div className="slider-limits">
+                      <span>Cold (10)</span>
+                      <span>Warm (28)</span>
+                      <span>Hot (34)</span>
+                    </div>
+                  </div>
+
+                  <div className="form-group slider-group">
+                    <div className="slider-label-row">
+                      <label>Salinity</label>
+                      <span className="slider-value">{diagSalinity} ppt</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="40"
+                      step="1"
+                      value={diagSalinity}
+                      onChange={(e) => setDiagSalinity(parseInt(e.target.value))}
+                      disabled={isLiveMode}
+                    />
+                    <div className="slider-limits">
+                      <span>Freshwater (0)</span>
+                      <span>Brackish (15)</span>
+                      <span>Marine (35)</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="form-group slider-group">
-                  <div className="slider-label-row">
-                    <label>Ammonia Nitrogen (TAN)</label>
-                    <span className="slider-value" style={{ color: diagAmmonia > 0.2 ? 'var(--coral)' : 'var(--aqua-primary)' }}>
-                      {diagAmmonia.toFixed(2)} mg/L
-                    </span>
+                {/* IoT Overrides Panel */}
+                {isLiveMode && (
+                  <div className="iot-overrides-section" style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '20px', marginTop: '10px' }}>
+                    <h4 className="iot-panel-title">⚡ IoT Machinery Overrides</h4>
+                    <div className="iot-grid">
+                      <div className={`iot-card ${aerator1 ? 'active' : ''}`}>
+                        <div className="iot-info">
+                          <span className="iot-name">Aerator #1 🌀</span>
+                          <span className="iot-desc">DO boost (+0.35/s)</span>
+                        </div>
+                        <button className={`iot-switch-btn ${aerator1 ? 'active' : ''}`} onClick={() => setAerator1(!aerator1)}>
+                          <div className="iot-switch-dot" />
+                        </button>
+                      </div>
+                      <div className={`iot-card ${aerator2 ? 'active' : ''}`}>
+                        <div className="iot-info">
+                          <span className="iot-name">Aerator #2 🌀</span>
+                          <span className="iot-desc">DO boost (+0.35/s)</span>
+                        </div>
+                        <button className={`iot-switch-btn ${aerator2 ? 'active' : ''}`} onClick={() => setAerator2(!aerator2)}>
+                          <div className="iot-switch-dot" />
+                        </button>
+                      </div>
+                      <div className={`iot-card ${waterExchange ? 'active' : ''}`}>
+                        <div className="iot-info">
+                          <span className="iot-name">Water Flow Pump 🚰</span>
+                          <span className="iot-desc">TAN dilution / stabilizes</span>
+                        </div>
+                        <button className={`iot-switch-btn ${waterExchange ? 'active' : ''}`} onClick={() => setWaterExchange(!waterExchange)}>
+                          <div className="iot-switch-dot" />
+                        </button>
+                      </div>
+                      <div className={`iot-card ${bioFilter ? 'active' : ''}`}>
+                        <div className="iot-info">
+                          <span className="iot-name">Bio-Filter 🦠</span>
+                          <span className="iot-desc">TAN absorption (-0.08/s)</span>
+                        </div>
+                        <button className={`iot-switch-btn ${bioFilter ? 'active' : ''}`} onClick={() => setBioFilter(!bioFilter)}>
+                          <div className="iot-switch-dot" />
+                        </button>
+                      </div>
+                      <div className={`iot-card ${bufferPump ? 'active' : ''}`}>
+                        <div className="iot-info">
+                          <span className="iot-name">pH Dosing Pump 🧪</span>
+                          <span className="iot-desc">Stabilize pH (neutral 7.2)</span>
+                        </div>
+                        <button className={`iot-switch-btn ${bufferPump ? 'active' : ''}`} onClick={() => setBufferPump(!bufferPump)}>
+                          <div className="iot-switch-dot" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="3.0"
-                    step="0.01"
-                    value={diagAmmonia}
-                    onChange={(e) => setDiagAmmonia(parseFloat(e.target.value))}
-                  />
-                  <div className="slider-limits">
-                    <span>Ideal (&lt;0.05)</span>
-                    <span>Toxic (&gt;0.5)</span>
-                  </div>
-                </div>
-
-                <div className="form-group slider-group">
-                  <div className="slider-label-row">
-                    <label>pH Level</label>
-                    <span className="slider-value" style={{ color: (diagPH < 6.5 || diagPH > 8.5) ? 'var(--coral)' : 'var(--aqua-primary)' }}>
-                      {diagPH.toFixed(1)}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="4.0"
-                    max="10.0"
-                    step="0.1"
-                    value={diagPH}
-                    onChange={(e) => setDiagPH(parseFloat(e.target.value))}
-                  />
-                  <div className="slider-limits">
-                    <span>Acidic (&lt;6.5)</span>
-                    <span>Neutral (7.0)</span>
-                    <span>Alkaline (&gt;8.5)</span>
-                  </div>
-                </div>
-
-                <div className="form-group slider-group">
-                  <div className="slider-label-row">
-                    <label>Water Temperature</label>
-                    <span className="slider-value">{diagTemp} °C</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="8"
-                    max="36"
-                    step="1"
-                    value={diagTemp}
-                    onChange={(e) => setDiagTemp(parseInt(e.target.value))}
-                  />
-                  <div className="slider-limits">
-                    <span>Cold (10)</span>
-                    <span>Warm (28)</span>
-                    <span>Hot (34)</span>
-                  </div>
-                </div>
-
-                <div className="form-group slider-group">
-                  <div className="slider-label-row">
-                    <label>Salinity</label>
-                    <span className="slider-value">{diagSalinity} ppt</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="40"
-                    step="1"
-                    value={diagSalinity}
-                    onChange={(e) => setDiagSalinity(parseInt(e.target.value))}
-                  />
-                  <div className="slider-limits">
-                    <span>Freshwater (0)</span>
-                    <span>Brackish (15)</span>
-                    <span>Marine (35)</span>
-                  </div>
-                </div>
+                )}
               </div>
 
               <div className="tool-panel glass-card output-panel">
                 <h3>Diagnostics Summary</h3>
                 <div className="telemetry-box">
                   <div className="metric-circle-wrapper">
-                    <div className="metric-circle health-circle" style={{ borderColor: diagResult.color }}>
+                    <div 
+                      className={`metric-circle health-circle ${isLiveMode && diagResult.score < 80 ? 'live-indicator-pulsing' : ''}`} 
+                      style={{ 
+                        borderColor: diagResult.color, 
+                        boxShadow: isLiveMode && diagResult.score < 80 ? `0 0 30px ${diagResult.color}` : 'none' 
+                      }}
+                    >
                       <span className="metric-val" style={{ color: diagResult.color }}>{diagResult.score}</span>
                       <span className="metric-unit">Health Index</span>
                     </div>
@@ -1045,6 +1681,292 @@ export default function AquaTools() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: DISEASE DIAGNOSTICIAN (Option 2) */}
+        {activeTab === 'disease' && (
+          <div className="tools-content-wrapper">
+            <div className="disease-wizard-card glass-card">
+              {/* Wizard Steps Progress Indicator */}
+              <div className="wizard-steps-header">
+                <div 
+                  className="wizard-step-progress-bar" 
+                  style={{ width: `${(wizardStep - 1) * 50}%` }}
+                />
+                <div className={`wizard-step-node ${wizardStep >= 1 ? 'active' : ''} ${wizardStep > 1 ? 'completed' : ''}`}>
+                  1
+                  <span className="wizard-step-label">1. Bio-profile</span>
+                </div>
+                <div className={`wizard-step-node ${wizardStep >= 2 ? 'active' : ''} ${wizardStep > 2 ? 'completed' : ''}`}>
+                  2
+                  <span className="wizard-step-label">2. Symptoms</span>
+                </div>
+                <div className={`wizard-step-node ${wizardStep >= 3 ? 'active' : ''} ${wizardStep > 3 ? 'completed' : ''}`}>
+                  3
+                  <span className="wizard-step-label">3. Diagnosis</span>
+                </div>
+              </div>
+
+              {/* Step 1: Bio-Profile Setup */}
+              {wizardStep === 1 && (
+                <div className="wizard-step-panel">
+                  <div style={{ textAlign: 'left' }}>
+                    <h3 style={{ fontSize: '1.4rem', color: 'var(--aqua-bright)', marginBottom: '10px' }}>Setup Bio-Profile</h3>
+                    <p style={{ fontSize: '0.9rem', color: 'rgba(224, 232, 240, 0.7)', lineHeight: '1.6' }}>
+                      Configure the target species and water volume parameters. This clinical wizard cross-references 
+                      pathological databases to suggest medical dosages calibrated specifically for your farm's volume.
+                    </p>
+                  </div>
+
+                  <div className="form-group" style={{ textAlign: 'left' }}>
+                    <label>Target Species under Assessment</label>
+                    <select value={diagSpecies} onChange={(e) => setDiagSpecies(e.target.value)}>
+                      <option value="tilapia">Nile Tilapia (Warmwater Finfish)</option>
+                      <option value="salmon">Atlantic Salmon (Coldwater Salmonids)</option>
+                      <option value="shrimp">White Shrimp (Penaeid Crustaceans)</option>
+                      <option value="catfish">African Catfish (Siluriformes Species)</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group" style={{ textAlign: 'left' }}>
+                    <label>Pond Water Volume (Imported from Stocking Density settings)</label>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <input 
+                        type="text" 
+                        value={`${Math.round(waterVolumeM3).toLocaleString()} m³`}
+                        readOnly 
+                        style={{ 
+                          background: 'rgba(0, 0, 0, 0.25)', 
+                          color: 'rgba(255, 255, 255, 0.8)', 
+                          cursor: 'not-allowed', 
+                          border: '1px solid var(--glass-border)',
+                          padding: '12px 16px',
+                          borderRadius: 'var(--border-radius-sm)',
+                          fontSize: '0.92rem',
+                          width: '180px'
+                        }}
+                      />
+                      <span style={{ fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.45)' }}>
+                        ({Math.round(waterVolumeLiters).toLocaleString()} Liters capacity)
+                      </span>
+                    </div>
+                    {waterVolumeM3 <= 1 && (
+                      <p style={{ fontSize: '0.75rem', color: 'var(--sunset-orange)', marginTop: '6px' }}>
+                        ⚠️ Notice: Pond volume is set to minimum. Setup custom lengths and depths under the **Smart Calculators &gt; Stocking Density** tab to enable auto-scaled dosage calculations.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="wizard-footer-actions" style={{ justifyContent: 'flex-end' }}>
+                    <button className="wizard-btn-next" onClick={() => setWizardStep(2)}>
+                      Proceed to Symptoms Survey &rarr;
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Symptom Survey */}
+              {wizardStep === 2 && (
+                <div className="wizard-step-panel">
+                  <div style={{ textAlign: 'left' }}>
+                    <h3 style={{ fontSize: '1.4rem', color: 'var(--aqua-bright)', marginBottom: '6px' }}>Symptom Checklist Survey</h3>
+                    <p style={{ fontSize: '0.88rem', color: 'rgba(224, 232, 240, 0.65)' }}>
+                      Observe your aquatic stocks carefully and check all active behavioral or physical markers.
+                    </p>
+                  </div>
+
+                  <div className="symptom-groups-grid">
+                    {/* Behavioral symptoms */}
+                    <div className="symptom-column">
+                      <h4>Behavioral Anomalies</h4>
+                      <div className="symptoms-list-flex">
+                        {[
+                          { id: 'lethargy', label: 'Lethargic swimming / resting on floor', icon: '💤' },
+                          { id: 'surface_gasping', label: 'Gasping at water surface (Hypoxia signs)', icon: '👄' },
+                          { id: 'flashing', label: 'Flashing / scratching bodies on pond sides', icon: '💥' },
+                          { id: 'anorexia', label: 'Severe loss of appetite / feed refusal', icon: '🍽️' },
+                        ].map((item) => (
+                          <div 
+                            key={item.id}
+                            className={`symptom-check-card ${symptomChecklist[item.id] ? 'checked' : ''}`}
+                            onClick={() => setSymptomChecklist({ ...symptomChecklist, [item.id]: !symptomChecklist[item.id] })}
+                          >
+                            <div className="symptom-checkbox-custom">
+                              ✓
+                            </div>
+                            <span style={{ fontSize: '1.1rem' }}>{item.icon}</span>
+                            <span className="symptom-label">{item.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Physical symptoms */}
+                    <div className="symptom-column">
+                      <h4>Physical & Carapace Symptoms</h4>
+                      <div className="symptoms-list-flex">
+                        {[
+                          { id: 'white_spots', label: 'White spots on skin, scales, or shell', icon: '⚪' },
+                          { id: 'frayed_fins', label: 'Frayed, bleeding, or eroded fins / tail', icon: '🩹' },
+                          { id: 'cloudy_eyes', label: 'Cloudy, bulging, or swollen eyes', icon: '👁️' },
+                          { id: 'gills_rot', label: 'Swollen, pale, or brown necrotic gills', icon: '🐟' },
+                          { id: 'cotton_growths', label: 'Fuzzy cotton-like patches on body', icon: '☁️' },
+                          { id: 'black_shell', label: 'Black spots / gills (shrimp shell rot)', icon: '🌑' },
+                        ].map((item) => (
+                          <div 
+                            key={item.id}
+                            className={`symptom-check-card ${symptomChecklist[item.id] ? 'checked' : ''}`}
+                            onClick={() => setSymptomChecklist({ ...symptomChecklist, [item.id]: !symptomChecklist[item.id] })}
+                          >
+                            <div className="symptom-checkbox-custom">
+                              ✓
+                            </div>
+                            <span style={{ fontSize: '1.1rem' }}>{item.icon}</span>
+                            <span className="symptom-label">{item.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="wizard-footer-actions">
+                    <button className="wizard-btn-back" onClick={() => setWizardStep(1)}>
+                      &larr; Back
+                    </button>
+                    <button className="wizard-btn-next" onClick={() => setWizardStep(3)}>
+                      Diagnose Aquatic Stock &rarr;
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Diagnostic Report */}
+              {wizardStep === 3 && (
+                <div className="wizard-step-panel">
+                  <div style={{ textAlign: 'left' }}>
+                    <h3 style={{ fontSize: '1.4rem', color: 'var(--aqua-bright)', marginBottom: '6px' }}>Aquaculture Diagnostic Report</h3>
+                    <p style={{ fontSize: '0.88rem', color: 'rgba(224, 232, 240, 0.65)' }}>
+                      Below are the computed probability matches and veterinary-recommended treatments based on stock pathology.
+                    </p>
+                  </div>
+
+                  {Object.values(symptomChecklist).some(val => val) ? (
+                    <div className="tool-grid" style={{ gridTemplateColumns: '1.2fr 0.8fr', gap: '24px' }}>
+                      {/* Primary diagnosis */}
+                      <div className="diagnosis-report-card">
+                        <div className="report-header-row">
+                          <div className="report-title-meta">
+                            <h4>{diseaseDiagnosisResult[0].name}</h4>
+                            <p>Primary Pathogen Suspect</p>
+                          </div>
+                          <span className="report-confidence-badge" style={{ 
+                            background: diseaseDiagnosisResult[0].probability > 60 ? 'rgba(255, 107, 107, 0.15)' : 'rgba(255, 159, 67, 0.15)',
+                            borderColor: diseaseDiagnosisResult[0].probability > 60 ? 'var(--coral)' : 'var(--sunset-orange)',
+                            color: diseaseDiagnosisResult[0].probability > 60 ? 'var(--coral-soft)' : 'var(--sunset-orange)'
+                          }}>
+                            {diseaseDiagnosisResult[0].probability}% Match
+                          </span>
+                        </div>
+
+                        <div className="report-body-section">
+                          <span className="report-section-title">Description</span>
+                          <p className="report-body-text">{diseaseDiagnosisResult[0].desc}</p>
+                        </div>
+
+                        <div className="prescription-box">
+                          <span className="prescription-title">💊 Veterinary Treatment Recipe</span>
+                          <span className="prescription-dose">{diseaseDiagnosisResult[0].presDose}</span>
+                          
+                          {waterVolumeM3 > 1 && diseaseDiagnosisResult[0].dosePerM3 > 0 ? (
+                            <div style={{ padding: '8px 12px', background: 'rgba(0,0,0,0.2)', borderRadius: '4px', margin: '4px 0' }}>
+                              <strong style={{ color: 'var(--aqua-glow)', fontSize: '0.85rem' }}>
+                                Calibrated Volume Dose Recommendation:
+                              </strong>
+                              <p style={{ fontSize: '0.92rem', color: '#fff', fontWeight: 'bold', margin: '4px 0' }}>
+                                Total Dosage: {(diseaseDiagnosisResult[0].dosePerM3 * waterVolumeM3).toFixed(2)} {diseaseDiagnosisResult[0].doseUnit}
+                              </p>
+                              <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>
+                                Calibrated for your {Math.round(waterVolumeM3)} m³ pond setup (dose rate of {diseaseDiagnosisResult[0].dosePerM3} {diseaseDiagnosisResult[0].doseUnit}/m³).
+                              </span>
+                            </div>
+                          ) : (
+                            <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', margin: '4px 0' }}>
+                              Setup custom dimensions in the Stocking Density tab to get automatically scaled bulk quantity dosage.
+                            </span>
+                          )}
+
+                          <p className="prescription-instructions">
+                            <strong>Administration Instructions:</strong> {diseaseDiagnosisResult[0].presInst}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Secondary matches */}
+                      <div className="tool-panel glass-card" style={{ padding: '24px', gap: '16px' }}>
+                        <h4 style={{ fontSize: '1rem', color: '#fff', textAlign: 'left', borderBottom: '1px solid var(--glass-border)', paddingBottom: '8px' }}>
+                          Differential Diagnoses
+                        </h4>
+                        <p style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', textAlign: 'left', marginTop: '-8px' }}>
+                          Other matching pathogens to consider:
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                          {diseaseDiagnosisResult.slice(1).map((dis, idx) => (
+                            <div key={idx} style={{ textAlign: 'left' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                <strong style={{ fontSize: '0.85rem', color: '#fff' }}>{dis.name}</strong>
+                                <span style={{ fontSize: '0.75rem', color: dis.probability > 30 ? 'var(--sunset-orange)' : 'rgba(255,255,255,0.4)' }}>
+                                  {dis.probability}% Match
+                                </span>
+                              </div>
+                              <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)', lineHeight: '1.4' }}>
+                                {dis.desc.slice(0, 85)}...
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="alarm-box" style={{ padding: '30px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderColor: 'var(--glass-border)' }}>
+                      <span style={{ fontSize: '2.5rem' }}>🩺</span>
+                      <h4 style={{ color: '#fff', fontSize: '1.1rem', margin: '12px 0 6px' }}>No Symptoms Checked</h4>
+                      <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.45)', maxWidth: '400px', margin: '0 auto' }}>
+                        You did not check any symptom markers. Please return to the checklist step and specify active behaviors or visual markings on your stock.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="wizard-footer-actions">
+                    <button className="wizard-btn-back" onClick={() => setWizardStep(2)}>
+                      &larr; Return to Symptoms
+                    </button>
+                    <button 
+                      className="wizard-btn-back" 
+                      onClick={() => {
+                        // Reset symptom Checklist
+                        setSymptomChecklist({
+                          lethargy: false,
+                          surface_gasping: false,
+                          flashing: false,
+                          anorexia: false,
+                          white_spots: false,
+                          frayed_fins: false,
+                          cloudy_eyes: false,
+                          gills_rot: false,
+                          cotton_growths: false,
+                          black_shell: false
+                        });
+                        setWizardStep(1);
+                      }}
+                      style={{ border: '1px solid rgba(0, 212, 170, 0.3)', color: 'var(--aqua-primary)' }}
+                    >
+                      🔄 Reset & Diagnose Again
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
