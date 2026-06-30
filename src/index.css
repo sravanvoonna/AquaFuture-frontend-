@@ -677,6 +677,24 @@ ul { list-style: none; }
 
 /* Swimming creatures in hero */
 /* Ambient animations are now rendered on the global canvas context. */
+.hero-creature-btn {
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease, scale 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  user-select: none;
+}
+.hero-creature-btn:hover {
+  scale: 1.15;
+  filter: drop-shadow(0 0 25px rgba(0, 229, 255, 0.8)) !important;
+}
+.hero-creature-btn[title*="Shrimp"]:hover {
+  filter: drop-shadow(0 0 25px rgba(0, 212, 170, 0.8)) !important;
+}
+.hero-creature-btn[title*="Crab"]:hover {
+  filter: drop-shadow(0 0 25px rgba(123, 104, 238, 0.8)) !important;
+}
+.hero-creature-btn[title*="Seaweed"]:hover {
+  filter: drop-shadow(0 0 25px rgba(0, 245, 200, 0.8)) !important;
+}
 
 /* ---- About Section ---- */
 .about {

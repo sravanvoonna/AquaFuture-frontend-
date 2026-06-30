@@ -1,4 +1,31 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+
+const services = [
+  {
+    icon: '🐟',
+    title: 'Fish Farming',
+    desc: 'Smart planning tools for freshwater carps (Rohu, Catla, Mrigal), Tilapia, and Pangasius catfish with automated feed tables.',
+    tag: 'Most Popular',
+  },
+  {
+    icon: '🦐',
+    title: 'Shrimp Culture',
+    desc: 'Precision shrimp and prawn farming models for Whiteleg (Vannamei) and Tiger shrimp with water salinity calculators.',
+    tag: 'High Export Value',
+  },
+  {
+    icon: '🦀',
+    title: 'Mud Crab Farming',
+    desc: 'Coastal mangrove mud crab farming schedules with customized stocking density and claw protection guides.',
+    tag: 'Premium Demand',
+  },
+  {
+    icon: '🌿',
+    title: 'Seaweed Cultivation',
+    desc: 'Floating bamboo raft and longline rope seaweed cultivation schedules tailored for Kappaphycus coastal farmers.',
+    tag: 'Sustainable',
+  },
+];
 
 export default function Services() {
   const sectionRef = useRef(null);
@@ -33,7 +60,7 @@ export default function Services() {
   }, []);
 
   // Update default inputs when service changes to make it user-friendly
-  const handleServiceSelect = (service) => {
+  const handleServiceSelect = useCallback((service) => {
     setSelectedService(service);
     setGeneratedPlan(null);
     setLoadingPlan(false);
@@ -63,7 +90,28 @@ export default function Services() {
       setWaterSource('Borewell');
       setAerationPower('2 HP Paddlewheel');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const handleOpenPlanner = (event) => {
+      const type = event.detail;
+      let matchedTitle = '';
+      if (type === 'shrimp') matchedTitle = 'Shrimp Culture';
+      else if (type === 'fish') matchedTitle = 'Fish Farming';
+      else if (type === 'crab') matchedTitle = 'Mud Crab Farming';
+      else if (type === 'seaweed') matchedTitle = 'Seaweed Cultivation';
+
+      const found = services.find(s => s.title === matchedTitle);
+      if (found) {
+        handleServiceSelect(found);
+        setTimeout(() => {
+          document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    };
+    window.addEventListener('open-cultivation-planner', handleOpenPlanner);
+    return () => window.removeEventListener('open-cultivation-planner', handleOpenPlanner);
+  }, [handleServiceSelect]);
 
   // Generate Cultivation Advisory Schedule via Azure OpenAI (Gemini/GPT)
   const handleGeneratePlan = async (e) => {
@@ -571,32 +619,6 @@ Ensure the JSON is perfectly valid. Do not include any other text, markdown bloc
     printWindow.document.close();
   };
 
-  const services = [
-    {
-      icon: '🐟',
-      title: 'Fish Farming',
-      desc: 'Smart planning tools for freshwater carps (Rohu, Catla, Mrigal), Tilapia, and Pangasius catfish with automated feed tables.',
-      tag: 'Most Popular',
-    },
-    {
-      icon: '🦐',
-      title: 'Shrimp Culture',
-      desc: 'Precision shrimp and prawn farming models for Whiteleg (Vannamei) and Tiger shrimp with water salinity calculators.',
-      tag: 'High Export Value',
-    },
-    {
-      icon: '🦀',
-      title: 'Mud Crab Farming',
-      desc: 'Coastal mangrove mud crab farming schedules with customized stocking density and claw protection guides.',
-      tag: 'Premium Demand',
-    },
-    {
-      icon: '🌿',
-      title: 'Seaweed Cultivation',
-      desc: 'Floating bamboo raft and longline rope seaweed cultivation schedules tailored for Kappaphycus coastal farmers.',
-      tag: 'Sustainable',
-    },
-  ];
 
   return (
     <section className="services" id="services" ref={sectionRef}>

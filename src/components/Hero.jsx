@@ -26,6 +26,11 @@ export default function Hero() {
     opacity: 0.3 + Math.random() * 0.4,
   }));
 
+  const handleCreatureClick = (type) => {
+    const event = new CustomEvent('open-cultivation-planner', { detail: type });
+    window.dispatchEvent(event);
+  };
+
   return (
     <section className="hero" id="hero" ref={heroRef}>
       {/* Ambient Light Rays Overlay */}
@@ -91,65 +96,95 @@ export default function Hero() {
           <div className="hero-visual">
             <div className="hero-aquarium">
               {/* Premium ambient decorative elements in hero visual box */}
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                fontSize: '6rem',
-                animation: 'float-gentle 4s ease-in-out infinite',
-                filter: 'drop-shadow(0 0 30px rgba(0, 229, 255, 0.4))',
-                zIndex: 5,
-              }}>
+              <div
+                className="hero-creature-btn"
+                title="Launch Fish Cultivation Planner"
+                onClick={() => handleCreatureClick('fish')}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  fontSize: '6rem',
+                  animation: 'float-gentle 4s ease-in-out infinite',
+                  filter: 'drop-shadow(0 0 30px rgba(0, 229, 255, 0.4))',
+                  zIndex: 5,
+                }}
+              >
                 🐟
               </div>
-              <div style={{
-                position: 'absolute',
-                top: '30%',
-                left: '25%',
-                fontSize: '3rem',
-                animation: 'float-gentle 3s ease-in-out infinite 0.5s',
-                filter: 'drop-shadow(0 0 20px rgba(0, 212, 170, 0.3))',
-              }}>
+              <div
+                className="hero-creature-btn"
+                title="Launch Shrimp Cultivation Planner"
+                onClick={() => handleCreatureClick('shrimp')}
+                style={{
+                  position: 'absolute',
+                  top: '30%',
+                  left: '25%',
+                  fontSize: '3rem',
+                  animation: 'float-gentle 3s ease-in-out infinite 0.5s',
+                  filter: 'drop-shadow(0 0 20px rgba(0, 212, 170, 0.3))',
+                }}
+              >
                 🦐
               </div>
-              <div style={{
-                position: 'absolute',
-                top: '65%',
-                left: '70%',
-                fontSize: '3.5rem',
-                animation: 'float-gentle 3.5s ease-in-out infinite 1s',
-                filter: 'drop-shadow(0 0 20px rgba(123, 104, 238, 0.3))',
-              }}>
+              <div
+                className="hero-creature-btn"
+                title="Launch Mud Crab Cultivation Planner"
+                onClick={() => handleCreatureClick('crab')}
+                style={{
+                  position: 'absolute',
+                  top: '65%',
+                  left: '70%',
+                  fontSize: '3.5rem',
+                  animation: 'float-gentle 3.5s ease-in-out infinite 1s',
+                  filter: 'drop-shadow(0 0 20px rgba(123, 104, 238, 0.3))',
+                }}
+              >
                 🦞
               </div>
-              <div style={{
-                position: 'absolute',
-                top: '20%',
-                left: '65%',
-                fontSize: '2.5rem',
-                animation: 'float-gentle 4.5s ease-in-out infinite 0.8s',
-                filter: 'drop-shadow(0 0 15px rgba(0, 245, 200, 0.3))',
-              }}>
+              <div
+                className="hero-creature-btn"
+                title="Launch Fish Cultivation Planner"
+                onClick={() => handleCreatureClick('fish')}
+                style={{
+                  position: 'absolute',
+                  top: '20%',
+                  left: '65%',
+                  fontSize: '2.5rem',
+                  animation: 'float-gentle 4.5s ease-in-out infinite 0.8s',
+                  filter: 'drop-shadow(0 0 15px rgba(0, 245, 200, 0.3))',
+                }}
+              >
                 🐠
               </div>
-              <div style={{
-                position: 'absolute',
-                top: '75%',
-                left: '30%',
-                fontSize: '2rem',
-                animation: 'float-gentle 3.8s ease-in-out infinite 1.5s',
-                filter: 'drop-shadow(0 0 15px rgba(255, 107, 107, 0.3))',
-              }}>
+              <div
+                className="hero-creature-btn"
+                title="Launch Mud Crab Cultivation Planner"
+                onClick={() => handleCreatureClick('crab')}
+                style={{
+                  position: 'absolute',
+                  top: '75%',
+                  left: '30%',
+                  fontSize: '2rem',
+                  animation: 'float-gentle 3.8s ease-in-out infinite 1.5s',
+                  filter: 'drop-shadow(0 0 15px rgba(255, 107, 107, 0.3))',
+                }}
+              >
                 🦀
               </div>
-              <div style={{
-                position: 'absolute',
-                bottom: '10%',
-                left: '50%',
-                fontSize: '2.5rem',
-                animation: 'float-gentle 5s ease-in-out infinite 2s',
-              }}>
+              <div
+                className="hero-creature-btn"
+                title="Launch Seaweed Cultivation Planner"
+                onClick={() => handleCreatureClick('seaweed')}
+                style={{
+                  position: 'absolute',
+                  bottom: '10%',
+                  left: '50%',
+                  fontSize: '2.5rem',
+                  animation: 'float-gentle 5s ease-in-out infinite 2s',
+                }}
+              >
                 🪸
               </div>
             </div>
