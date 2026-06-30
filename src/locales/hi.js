@@ -232,6 +232,7 @@ export default {
       trend: "रुझान",
       newsAlertsTitle: "क्षेत्रीय चेतावनी अलर्ट",
       noNews: "इस राज्य के लिए कोई सक्रिय चेतावनी नहीं है। परिस्थितियाँ स्थिर हैं।",
+      newsUpdate: "समाचार अपडेट",
       eligibilityPopup: {
         title: "योजना पात्रता जांच",
         close: "संवाद बंद करें",

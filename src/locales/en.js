@@ -232,6 +232,7 @@ export default {
       trend: "Trend",
       newsAlertsTitle: "Regional Advisory Alerts",
       noNews: "No active warnings for this state. Conditions are stable.",
+      newsUpdate: "News Update",
       eligibilityPopup: {
         title: "Scheme Eligibility Check",
         close: "Close Dialog",
