@@ -4,18 +4,21 @@ import { useTranslation } from 'react-i18next';
 const services = [
   {
     icon: '🐟',
+    key: 'fish',
     title: 'Fish Farming',
     desc: 'Smart planning tools for freshwater carps (Rohu, Catla, Mrigal), Tilapia, and Pangasius catfish with automated feed tables.',
     tag: 'Most Popular',
   },
   {
     icon: '🦐',
+    key: 'shrimp',
     title: 'Shrimp Culture',
     desc: 'Precision shrimp and prawn farming models for Whiteleg (Vannamei) and Tiger shrimp with water salinity calculators.',
     tag: 'High Export Value',
   },
   {
     icon: '🦀',
+    key: 'crab',
     title: 'Mud Crab Farming',
     desc: 'Coastal mangrove mud crab farming schedules with customized stocking density and claw protection guides.',
     tag: 'Premium Demand',

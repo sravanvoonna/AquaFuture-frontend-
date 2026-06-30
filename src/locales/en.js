@@ -1,5 +1,41 @@
 export default {
   translation: {
+    regions: {
+      ap: "Andhra Pradesh",
+      wb: "West Bengal",
+      tn: "Tamil Nadu",
+      kl: "Kerala",
+      od: "Odisha"
+    },
+    pricePlanner: {
+      step1Title: "Production Scale Audit",
+      step1Desc: "Select your farm configurations to estimate your scale.",
+      species: "Species Cultured",
+      shrimpOpt: "White Shrimp (Penaeus vannamei)",
+      finfishOpt: "Finfish (Tilapia, Salmon, Catfish)",
+      seaweedOpt: "Seaweed (Kappaphycus, Kelp)",
+      infrastructure: "Facility Infrastructure",
+      pondOpt: "Semi-Intensive Ponds",
+      rasOpt: "Recirculating Aquaculture (RAS)",
+      cageOpt: "Open Coastal Sea Cages",
+      hatcheryOpt: "Hatchery / Breeding Tanks",
+      activePonds: "Active Ponds/Tanks",
+      targetYield: "Target Yield",
+      step2Title: "Crop Expense Audits",
+      step2Desc: "Input your current operating feed and crop values to calculate savings.",
+      weeklyFeed: "Weekly Feed Dispersed",
+      feedPrice: "Feed Price per Quintal",
+      annualCropVal: "Estimated Annual Crop Valuation",
+      profitDashboard: "Annual Profit Retained Dashboard",
+      feedSavings: "Feed Savings (Annual)",
+      cropRetention: "Crop Retention (Annual)",
+      netProfitRetained: "Net Annual Profit Retained",
+      freeSoftwareNote: "(Software cost is ₹0.00, meaning 100% of savings are direct farm profits)",
+      retentionRate: "Net Profit Retention Rate",
+      return: "100% Return",
+      benefit: "100% Free Platform Benefit",
+      benefitText: "By utilizing AquaFuture at no charge, your farm retains every single rupee of optimized feed and biological crop savings."
+    },
     navbar: {
       home: "Home",
       about: "About",
@@ -28,6 +64,11 @@ export default {
       tabFeed: "Daily Feed Calculator",
       tabDosing: "Lime & Soil Doser",
       tabBreed: "Breed Selector",
+      consoleTitle: "AquaCare Analytics Console",
+      interactiveMode: "Interactive Mode",
+      mainTitle: "Revolutionizing Aquaculture with Smart Technology",
+      mainDesc1: "AquaFuture is the next-generation platform designed for modern aqua farmers. We combine cutting-edge artificial intelligence, IoT sensor networks, and predictive analytics to help you maximize yields, reduce mortality rates, and build sustainable aquaculture operations.",
+      mainDesc2: "Select any utility module below to interact with the Advisory Calculator console on the left and check parameters.",
       waterMeter: {
         title: "Water Parameter Calibration",
         pH: "Water pH Level",
@@ -41,14 +82,25 @@ export default {
         optimal: "Optimal",
         acidicPh: "Critical Acidic pH",
         alkalinePh: "Critical Alkaline pH",
+        mildAcidicPh: "Sub-optimal acidic pH",
+        mildAlkalinePh: "Sub-optimal alkaline pH",
         lowOxygen: "Critical Low Oxygen (Anoxia)",
         oxygenStress: "Mild Oxygen Stress",
         lowTemp: "Critical Low Temperature",
         highTemp: "Critical High Temperature",
-        salinityStress: "Salinity Stress"
+        coolTemp: "Sub-optimal cooler water",
+        warmTemp: "Elevated water temp",
+        salinityStress: "Salinity Stress",
+        advisoryOptimal: "All water parameters are currently in healthy, high-yield zones.",
+        advisoryCritical: "Immediate action required. Water parameters are in dangerous stress zones.",
+        advisoryWarning: "Minor adjustments needed to prevent species mortality or stress.",
+        alerts: "Alerts",
+        analyzing: "Analyzing Water Quality...",
+        advisoryTitle: "Action Plan & Advisory:"
       },
       feedCalculator: {
         title: "Feed Biomass Calculator",
+        subtitle: "Optimize feed conversion ratios (FCR) and calculate daily biomass feed splits.",
         abw: "Average Body Weight (ABW - grams)",
         density: "Estimated Stocking Count (Pieces)",
         feedRate: "Feeding Rate (% of Biomass)",
@@ -59,6 +111,7 @@ export default {
       },
       limeDoser: {
         title: "Pond Soil Remediation Doser",
+        subtitle: "Calculate exact soil buffering applications for acidic or alkaline ponds.",
         area: "Pond Area (Acres)",
         targetPh: "Current Soil pH",
         phase: "Treatment Phase",
@@ -67,15 +120,27 @@ export default {
         limeRequirement: "Agricultural Quicklime (CaO) Needed",
         advisory: "Application Advisory",
         advisoryPrep: "Spread quicklime evenly across dried pond bottom. Wait 7 days before filling water.",
-        advisoryActive: "Dissolve lime in fresh water slurry and broadcast evenly. Do not apply more than 100kg/acre in a single day."
+        advisoryActive: "Dissolve lime in fresh water slurry and broadcast evenly. Do not apply more than 100kg/acre in a single day.",
+        treatmentRequired: "Treatment Required",
+        totalAmount: "Total Amount Needed",
+        none: "None",
+        optimalMsg: "Pond soil and water pH is optimal (7.0 - 8.5). Continue standard biosecurity protocols.",
+        method: "Method of Application"
       },
       breedSelector: {
         title: "Genetic Breed Optimizer",
+        subtitle: "Select a target crop to forecast growth speed metrics and genetic viability.",
         selectBreed: "Select Target Breed",
         idealSalinity: "Ideal Salinity Range",
         growthPeriod: "Estimated Harvest Growth Period",
         marketValue: "Estimated Market Value Rate",
-        exportRating: "Global Export Index"
+        exportRating: "Global Export Index",
+        shrimp: "Shrimp",
+        crab: "Crab",
+        seaweed: "Seaweed",
+        strain: "Genetic Strain",
+        growth: "Growth Coefficient",
+        survival: "Disease Survival Chance"
       }
     },
     services: {
