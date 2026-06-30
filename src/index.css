@@ -3830,7 +3830,7 @@ ul { list-style: none; }
   color: #fff;
 }
 
-.scheduler-form .form-submit-btn {
+.form-submit-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3844,13 +3844,16 @@ ul { list-style: none; }
   color: #011124;
   cursor: pointer;
   transition: var(--transition-base);
-  margin-top: 10px;
 }
 
-.scheduler-form .form-submit-btn:hover {
+.form-submit-btn:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-glow-strong);
   filter: brightness(1.1);
+}
+
+.scheduler-form .form-submit-btn {
+  margin-top: 10px;
 }
 
 /* Loading Box */
