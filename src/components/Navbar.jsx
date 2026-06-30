@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -11,13 +13,13 @@ export default function Navbar() {
   }, []);
 
   const links = [
-    { label: 'Home', href: '#hero' },
-    { label: 'About', href: '#about' },
-    { label: 'Services', href: '#services' },
-    { label: 'Species', href: '#species' },
-    { label: 'Technology', href: '#technology' },
-    { label: 'Tools', href: '#tools' },
-    { label: 'Savings', href: '#pricing' },
+    { key: 'home', href: '#hero' },
+    { key: 'about', href: '#about' },
+    { key: 'services', href: '#services' },
+    { key: 'species', href: '#species' },
+    { key: 'technology', href: '#technology' },
+    { key: 'tools', href: '#tools' },
+    { key: 'savings', href: '#pricing' },
   ];
 
   const handleLinkClick = (e, href) => {
@@ -25,6 +27,10 @@ export default function Navbar() {
     setMenuOpen(false);
     const el = document.querySelector(href);
     if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleLanguageChange = (e) => {
+    i18n.changeLanguage(e.target.value);
   };
 
   return (
@@ -39,16 +45,31 @@ export default function Navbar() {
         <div className={`nav-links ${menuOpen ? 'open' : ''}`}>
           {links.map(link => (
             <a
-              key={link.label}
+              key={link.key}
               href={link.href}
               className="nav-link"
               onClick={(e) => handleLinkClick(e, link.href)}
             >
-              {link.label}
+              {t(`navbar.${link.key}`)}
             </a>
           ))}
+          
+          <div className="lang-selector-container">
+            <select
+              value={i18n.language}
+              onChange={handleLanguageChange}
+              className="lang-selector-select"
+              aria-label="Select Language"
+            >
+              <option value="en">English</option>
+              <option value="hi">हिन्दी</option>
+              <option value="te">తెలుగు</option>
+              <option value="ta">தமிழ்</option>
+            </select>
+          </div>
+
           <button className="nav-cta" onClick={(e) => handleLinkClick(e, '#contact')}>
-            AI Advisor
+            {t('navbar.aiAdvisor')}
           </button>
         </div>
 

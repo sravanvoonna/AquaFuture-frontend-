@@ -1,6 +1,50 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+
+const speciesLocalizations = {
+  hi: {
+    'Rohu': { name: 'रोहू', desc: 'सबसे लोकप्रिय भारतीय प्रमुख कार्प। भारतीय मीठे पानी के बाजारों में अत्यधिक मूल्यवान।', tag: 'भारतीय प्रमुख कार्प' },
+    'Catla': { name: 'कतला', desc: 'सबसे तेजी से बढ़ने वाली भारतीय प्रमुख कार्प। एक सतह फीडर जो ज़ोप्लांकटन पर फ़ीड करता है।', tag: 'सतह कार्प' },
+    'Mrigal': { name: 'मृगल', desc: 'भारतीय बहुसंस्कृति में एक आवश्यक तल-खिला कार्प। मलबे और सड़ने वाले कार्बनिक पदार्थों का उपयोग करता है।', tag: 'तल कार्प' },
+    'Pacific White Shrimp': { name: 'प्रशांत सफेद झींगा', desc: 'भारत में पाला जाने वाला प्रमुख झींगा। गहन और अर्ध-गहन बायोफ्लोक तालाबों में अत्यधिक उत्पादक।', tag: 'प्रमुख निर्यात झींगा' },
+    'Giant Tiger Prawn': { name: 'विशाल टाइगर झींगा', desc: 'पारंपरिक उच्च मूल्य वाला टाइगर झींगा। अपने बड़े आकार, रंग और प्रीमियम निर्यात मूल्य के लिए प्रसिद्ध।', tag: 'टाइगर झींगा' },
+    'Giant Freshwater Prawn': { name: 'विशाल मीठे पानी का झींगा (स्कैम्पी)', desc: 'भारत में स्कैम्पी के रूप में जाना जाता है। मीठे पानी के तालाबों में पाला जाता है।', tag: 'मीठे पानी की स्कैम्पी' },
+    'Asian Sea Bass (Barramundi)': { name: 'एशियाई सी बास (भेटकी)', desc: 'भारत में भेटकी कहा जाता है। पिंजरों और तालाबों में पाला जाने वाला एक उच्च मूल्य वाला मांसाहारी मछली।', tag: 'प्रीमियम तटीय भेटकी' },
+    'Pangasius Catfish': { name: 'पंगासियस कैटफ़िश', desc: 'आंध्र प्रदेश में बड़े पैमाने पर पाली जाने वाली उच्च घनत्व वाली मीठे पानी की कैटफ़िश। अत्यधिक प्रतिरोधी।', tag: 'उच्च उपज कैटफ़िश' },
+    'Nile Tilapia': { name: 'नील तिलापिया', desc: 'भारतीय मीठे पानी के संसाधनों में पाली जाने वाली अत्यधिक सहिष्णु मोनोसेक्स तिलापिया।', tag: 'पालतू तिलापिया' },
+    'Mud Crab': { name: 'कीचड़ केकड़ा', desc: 'पश्चिम बंगाल, आंध्र और केरल के मैंग्रोव मुहल्लों में पाला जाता है। मांस के लिए अत्यधिक मूल्यवान।', tag: 'खाड़ी कीचड़ केकड़ा' },
+    'Kappaphycus Seaweed': { name: 'कप्पाफाइकस समुद्री शैवाल', desc: 'औद्योगिक कैरेगीनन निष्कर्षण के लिए तमिलनाडु तट पर बड़े पैमाने पर खेती की जाती है।', tag: 'कैरेगीनन समुद्री शैवाल' }
+  },
+  te: {
+    'Rohu': { name: 'రోహు', desc: 'అత్యంత ప్రజాదరణ పొందిన భారతీయ మేజర్ కార్ప్. మార్కెట్లలో అధిక విలువ కలిగిన చేప.', tag: 'భారతీయ మేజర్ కార్ప్' },
+    'Catla': { name: 'కట్ల', desc: 'అతి వేగంగా పెరిగే భారతీయ మేజర్ కార్ప్. నీటి ఉపరితలంపై ఉండే జూప్లాంక్టన్‌ను తింటుంది.', tag: 'ఉపరితల కార్ప్' },
+    'Mrigal': { name: 'మృగాల్', desc: 'చెరువు అడుగు భాగంలో తింటూ పెరిగే ఒక ముఖ్యమైన కార్ప్ చేప.', tag: 'అడుగు కార్ప్' },
+    'Pacific White Shrimp': { name: 'పసిఫిక్ వైట్ రొయ్య', desc: 'భారతదేశంలో ఎక్కువగా సాగు చేసే రొయ్యల రకం. బయోఫ్లాక్ విధానంలో అధిక దిగుబడి ఇస్తుంది.', tag: 'ప్రధాన ఎగుమతి రొయ్య' },
+    'Giant Tiger Prawn': { name: 'టైగర్ రొయ్య', desc: 'అధిక ధర పలికే సాంప్రదాయ రొయ్యల రకం. దీని పరిమాణం, రంగు ఎగుమతికి అనుకూలం.', tag: 'టైగర్ రొయ్య' },
+    'Giant Freshwater Prawn': { name: 'మంచినీటి రొయ్య (స్కాంపcontentsీ)', desc: 'దీనిని భారతదేశంలో స్కాంపcontentsీ అంటారు. మంచినీటి చెరువులలో సాగు చేస్తారు.', tag: 'మంచినీటి స్కాంపcontentsీ' },
+    'Asian Sea Bass (Barramundi)': { name: 'ఆసియా సీ బాస్ (భేట్కి)', desc: 'దీనిని భేట్కి అంటారు. బోనులు మరియు చెరువులలో పెంచే ప్రీమియం రకం.', tag: 'ప్రీమియం తీర భేట్కి' },
+    'Pangasius Catfish': { name: 'పంగేసియస్ పండుగప్ప', desc: 'ఆంధ్రప్రదేశ్‌లో అత్యంత సాంద్రతతో పెంచే మంచినీటి పిల్లిచేప రకం.', tag: 'అధిక దిగుబడి పిల్లిచేప' },
+    'Nile Tilapia': { name: 'నైలు తిలాపియా', desc: 'మంచినీటి వనరులలో పెంచే తిలాపియా రకం. త్వరగా ఎదుగుతుంది.', tag: 'సాగు తిలాపియా' },
+    'Mud Crab': { name: 'మడ్ పీత', desc: 'కోస్తా తీరప్రాంత మడ అడవులలో పెంచే పీతల రకం. మాంసం కోసం బాగా విక్రయిస్తారు.', tag: 'మడ అడవుల పీత' },
+    'Kappaphycus Seaweed': { name: 'సముద్రపు నాచు', desc: 'తమిళనాడు తీరం పొడవునా పారిశ్రామిక అవసరాల కోసం పండించే నాచు రకం.', tag: 'సముద్రపు నాచు' }
+  },
+  ta: {
+    'Rohu': { name: 'ரோகு', desc: 'மிகவும் பிரபலமான இந்திய கெண்டை மீன் வகை. நன்னீர் சந்தைகளில் அதிக மதிப்புடையது.', tag: 'இந்திய கெண்டை மீன்' },
+    'Catla': { name: 'கட்லா', desc: 'மிக வேகமாக வளரும் இந்திய கெண்டை மீன். நீரின் மேற்பரப்பில் உள்ள நுண்ணுயிரிகளை உண்ணும்.', tag: 'மேற்பரப்பு கெண்டை' },
+    'Mrigal': { name: 'மிர்கால்', desc: 'அடியில் உள்ள கரிமக் கழிவுகளை உண்ணும் ஒரு முக்கியமான கெண்டை மீன் வகை.', tag: 'அடிமட்ட கெண்டை' },
+    'Pacific White Shrimp': { name: 'வெள்ளை இறால்', desc: 'இந்தியாவில் அதிகம் வளர்க்கப்படும் இறால் வகை. அதிக உற்பத்தித் திறன் கொண்டது.', tag: 'முக்கிய ஏற்றுமதி இறால்' },
+    'Giant Tiger Prawn': { name: 'டைகர் இறால்', desc: 'அதிக மதிப்புடைய இறால். பெரிய அளவு மற்றும் ஏற்றுமதி விலைக்கு பெயர் பெற்றது.', tag: 'டைகர் இறால்' },
+    'Giant Freshwater Prawn': { name: 'நன்னீர் இறால் (ஸ்காம்பி)', desc: 'இந்தியாவில் ஸ்காம்பி என அழைக்கப்படுகிறது. நன்னீர் குளங்களில் வளர்க்கப்படுகிறது.', tag: 'நன்னீர் ஸ்காம்பி' },
+    'Asian Sea Bass (Barramundi)': { name: 'கொடுவா மீன் (பெட்கி)', desc: 'பெட்கி என அழைக்கப்படுகிறது. கூண்டுகள் மற்றும் குளங்களில் வளர்க்கப்படும் மதிப்புமிக்க மீன்.', tag: 'பிரிமீயம் கடலோர கொடுவா' },
+    'Pangasius Catfish': { name: 'பங்காரியஸ் கெளுத்தி', desc: 'ஆந்திராவில் வளர்க்கப்படும் அதிக அடர்த்தி கொண்ட நன்னீர் கெளுத்தி மீன் வகை.', tag: 'அதிக மகசூல் கெளுத்தி' },
+    'Nile Tilapia': { name: 'திலாப்பியா', desc: 'வளர்ச்சி விகிதம் மற்றும் சகிப்புத்தன்மை கொண்ட நன்னீர் திலாப்பியா மீன் வகை.', tag: 'வளர்ப்பு திலாப்பியா' },
+    'Mud Crab': { name: 'சேற்று நண்டு', desc: 'வங்காளம் மற்றும் கேரள கடலோரப் பகுதிகளில் வளர்க்கப்படும் மதிப்புமிக்க நண்டு.', tag: 'கடலோர சேற்று நண்டு' },
+    'Kappaphycus Seaweed': { name: 'கடல் பாசி', desc: 'தொழில்துறை பயன்பாட்டிற்காக தமிழகக் கடற்கரையில் வளர்க்கப்படும் கடல் பாசி.', tag: 'தொழில்துறை கடல் பாசி' }
+  }
+};
 
 export default function SpeciesGallery() {
+  const { t, i18n } = useTranslation();
   const [activeFilter, setActiveFilter] = useState('All');
   const [selectedSpecies, setSelectedSpecies] = useState(null);
   const [activeTab, setActiveTab] = useState('parameters');
@@ -282,7 +326,40 @@ export default function SpeciesGallery() {
     }
   ];
 
-  const categories = ['All', 'Fish', 'Shrimp & Prawn', 'Crab', 'Seaweed'];
+  const categories = [
+    { key: 'All', labelKey: 'species.filterAll' },
+    { key: 'Fish', labelKey: 'species.filterFish' },
+    { key: 'Shrimp & Prawn', labelKey: 'species.filterShrimp' },
+    { key: 'Crab', labelKey: 'species.filterCrab' },
+    { key: 'Seaweed', labelKey: 'species.filterSeaweed' },
+  ];
+
+  const getLocalizedSpecies = (sp) => {
+    const lang = i18n.language;
+    if (speciesLocalizations[lang] && speciesLocalizations[lang][sp.name]) {
+      const loc = speciesLocalizations[lang][sp.name];
+      return {
+        ...sp,
+        name: loc.name || sp.name,
+        desc: loc.desc || sp.desc,
+        tag: loc.tag || sp.tag,
+        diseases: sp.diseases.map((dis, idx) => {
+          if (loc.diseases && loc.diseases[idx]) {
+            return {
+              ...dis,
+              name: loc.diseases[idx].name || dis.name,
+              symptoms: loc.diseases[idx].symptoms || dis.symptoms,
+              causes: loc.diseases[idx].causes || dis.causes,
+              treatment: loc.diseases[idx].treatment || dis.treatment
+            };
+          }
+          return dis;
+        })
+      };
+    }
+    return sp;
+  };
+
   const filtered = activeFilter === 'All' ? species : species.filter(s => s.category === activeFilter);
 
   return (
@@ -291,143 +368,148 @@ export default function SpeciesGallery() {
         <div className="section-header reveal">
           <div className="section-badge">
             <span className="badge-dot"></span>
-            Diagnostic Species Library
+            {t('species.badge')}
           </div>
-          <h2 className="section-title">Aquacultural Species & Diagnostics</h2>
+          <h2 className="section-title">{t('species.title')}</h2>
           <p className="section-subtitle">
-            Hover over or click on any species to launch the interactive AI Diagnostic Panel, 
-            detailing water parameters, diseases, symptoms, and prevention remedies.
+            {t('species.subtitle')}
           </p>
         </div>
 
         <div className="species-filters reveal">
           {categories.map(cat => (
             <button
-              key={cat}
-              className={`filter-btn ${activeFilter === cat ? 'active' : ''}`}
-              onClick={() => setActiveFilter(cat)}
+              key={cat.key}
+              className={`filter-btn ${activeFilter === cat.key ? 'active' : ''}`}
+              onClick={() => setActiveFilter(cat.key)}
             >
-              {cat}
+              {t(cat.labelKey)}
             </button>
           ))}
         </div>
 
         <div className="species-grid">
-          {filtered.map((sp, i) => (
-            <div
-              key={sp.name}
-              className="species-card"
-              style={{ transitionDelay: `${i * 0.05}s` }}
-              onClick={() => {
-                setSelectedSpecies(sp);
-                setActiveTab('parameters');
-              }}
-            >
-              <span className="species-tag">{sp.tag}</span>
-              <div className="species-image">
-                <span style={{ position: 'relative', zIndex: 2 }}>{sp.emoji}</span>
+          {filtered.map((rawSp, i) => {
+            const sp = getLocalizedSpecies(rawSp);
+            return (
+              <div
+                key={rawSp.name}
+                className="species-card"
+                style={{ transitionDelay: `${i * 0.05}s` }}
+                onClick={() => {
+                  setSelectedSpecies(rawSp);
+                  setActiveTab('parameters');
+                }}
+              >
+                <span className="species-tag">{sp.tag}</span>
+                <div className="species-image">
+                  <span style={{ position: 'relative', zIndex: 2 }}>{sp.emoji}</span>
+                </div>
+                <div className="species-info">
+                  <h3>{sp.name}</h3>
+                  <div className="scientific-name">{sp.scientific}</div>
+                  <p>{sp.desc}</p>
+                </div>
               </div>
-              <div className="species-info">
-                <h3>{sp.name}</h3>
-                <div className="scientific-name">{sp.scientific}</div>
-                <p>{sp.desc}</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
       {/* Premium Diagnostic Modal Drawer */}
-      {selectedSpecies && (
-        <div className="species-modal-backdrop" onClick={() => setSelectedSpecies(null)}>
-          <div className="species-modal-content glass-card" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close-btn" onClick={() => setSelectedSpecies(null)}>×</button>
-            
-            <div className="modal-header">
-              <span className="modal-emoji">{selectedSpecies.emoji}</span>
-              <div>
-                <h2>{selectedSpecies.name}</h2>
-                <div className="scientific-name">{selectedSpecies.scientific}</div>
-              </div>
-              <span className="modal-tag">{selectedSpecies.tag}</span>
-            </div>
-
-            <p className="modal-desc">{selectedSpecies.desc}</p>
-
-            <div className="modal-tabs">
-              <button 
-                className={`modal-tab-btn ${activeTab === 'parameters' ? 'active' : ''}`}
-                onClick={() => setActiveTab('parameters')}
-              >
-                📊 Optimal Parameters
-              </button>
-              <button 
-                className={`modal-tab-btn ${activeTab === 'diseases' ? 'active' : ''}`}
-                onClick={() => setActiveTab('diseases')}
-              >
-                🔬 Disease & Remedies
-              </button>
-            </div>
-
-            <div className="modal-body">
-              {activeTab === 'parameters' ? (
-                <div className="modal-parameters-grid">
-                  <div className="parameter-item">
-                    <span className="param-icon">🌡️</span>
-                    <div className="param-info">
-                      <label>Water Temperature</label>
-                      <div className="param-val">{selectedSpecies.params.temp}</div>
-                    </div>
-                  </div>
-                  <div className="parameter-item">
-                    <span className="param-icon">🧪</span>
-                    <div className="param-info">
-                      <label>pH Level</label>
-                      <div className="param-val">{selectedSpecies.params.ph}</div>
-                    </div>
-                  </div>
-                  <div className="parameter-item">
-                    <span className="param-icon">🧂</span>
-                    <div className="param-info">
-                      <label>Salinity Range</label>
-                      <div className="param-val">{selectedSpecies.params.salinity}</div>
-                    </div>
-                  </div>
-                  <div className="parameter-item">
-                    <span className="param-icon">🫧</span>
-                    <div className="param-info">
-                      <label>Dissolved Oxygen</label>
-                      <div className="param-val">{selectedSpecies.params.oxygen}</div>
-                    </div>
-                  </div>
+      {selectedSpecies && (() => {
+        const sp = getLocalizedSpecies(selectedSpecies);
+        return (
+          <div className="species-modal-backdrop" onClick={() => setSelectedSpecies(null)}>
+            <div className="species-modal-content glass-card" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-close-btn" onClick={() => setSelectedSpecies(null)}>×</button>
+              
+              <div className="modal-header">
+                <span className="modal-emoji">{sp.emoji}</span>
+                <div>
+                  <h2>{sp.name}</h2>
+                  <div className="scientific-name">{sp.scientific}</div>
                 </div>
-              ) : (
-                <div className="modal-diseases-list">
-                  {selectedSpecies.diseases.map((dis, idx) => (
-                    <div key={idx} className="modal-disease-item">
-                      <h4>👾 {dis.name}</h4>
-                      <div className="disease-details-grid">
-                        <div className="detail-row">
-                          <strong>⚠️ Symptoms:</strong>
-                          <p>{dis.symptoms}</p>
-                        </div>
-                        <div className="detail-row">
-                          <strong>🔬 Cause:</strong>
-                          <p>{dis.causes}</p>
-                        </div>
-                        <div className="treatment-box">
-                          <strong>🛡️ Prevention & Treatment:</strong>
-                          <p>{dis.treatment}</p>
-                        </div>
+                <span className="modal-tag">{sp.tag}</span>
+              </div>
+
+              <p className="modal-desc">{sp.desc}</p>
+
+              <div className="modal-tabs">
+                <button 
+                  className={`modal-tab-btn ${activeTab === 'parameters' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('parameters')}
+                >
+                  📊 {t('species.paramsTitle')}
+                </button>
+                <button 
+                  className={`modal-tab-btn ${activeTab === 'diseases' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('diseases')}
+                >
+                  🔬 {t('species.diseasesTitle')}
+                </button>
+              </div>
+
+              <div className="modal-body">
+                {activeTab === 'parameters' ? (
+                  <div className="modal-parameters-grid">
+                    <div className="parameter-item">
+                      <span className="param-icon">🌡️</span>
+                      <div className="param-info">
+                        <label>{t('about.waterMeter.temp')}</label>
+                        <div className="param-val">{sp.params.temp}</div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div className="parameter-item">
+                      <span className="param-icon">🧪</span>
+                      <div className="param-info">
+                        <label>{t('about.waterMeter.pH')}</label>
+                        <div className="param-val">{sp.params.ph}</div>
+                      </div>
+                    </div>
+                    <div className="parameter-item">
+                      <span className="param-icon">🧂</span>
+                      <div className="param-info">
+                        <label>{t('about.breedSelector.idealSalinity') || 'Salinity Range'}</label>
+                        <div className="param-val">{sp.params.salinity}</div>
+                      </div>
+                    </div>
+                    <div className="parameter-item">
+                      <span className="param-icon">🫧</span>
+                      <div className="param-info">
+                        <label>{t('about.waterMeter.oxygen')}</label>
+                        <div className="param-val">{sp.params.oxygen}</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="modal-diseases-list">
+                    {sp.diseases.map((dis, idx) => (
+                      <div key={idx} className="modal-disease-item">
+                        <h4>👾 {dis.name}</h4>
+                        <div className="disease-details-grid">
+                          <div className="detail-row">
+                            <strong>⚠️ {t('species.symptoms')}:</strong>
+                            <p>{dis.symptoms}</p>
+                          </div>
+                          <div className="detail-row">
+                            <strong>🔬 {t('species.causes')}:</strong>
+                            <p>{dis.causes}</p>
+                          </div>
+                          <div className="treatment-box">
+                            <strong>🛡️ {t('species.treatment')}:</strong>
+                            <p>{dis.treatment}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </section>
   );
 }

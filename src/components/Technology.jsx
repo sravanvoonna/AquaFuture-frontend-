@@ -1,9 +1,335 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+
+const schemeLocalizations = {
+  hi: {
+    'PMMSY Subsidy for Shrimp Ponds': {
+      title: 'झींगा तालाबों के लिए पीएमएमएसवाई सब्सिडी',
+      desc: 'नए झींगा तालाबों के निर्माण, एरेटर की खरीद और बायोफ्लोक इनपुट लागत के लिए 40% से 60% सब्सिडी प्राप्त करें।',
+      eligibility: 'इसके लिए पंजीकृत सीएए लाइसेंस, भूमि स्वामित्व प्रमाण पत्र या 7 साल का लीज डीड आवश्यक है।'
+    },
+    'Subsidized Electricity for Aquaculture Ponds': {
+      title: 'एक्वाकल्चर तालाबों के लिए रियायती बिजली',
+      desc: 'आंध्र प्रदेश सरकार पंजीकृत एक्वा तालाबों के लिए ₹1.50 प्रति यूनिट की अत्यधिक रियायती दर पर बिजली प्रदान करती है।',
+      eligibility: '10 एकड़ तक के तालाबों के लिए उपलब्ध। सक्रिय सीएए प्रमाण पत्र आवश्यक है।'
+    },
+    'West Bengal Crab Fattening Scheme': {
+      title: 'पश्चिम बंगाल केकड़ा पालन योजना',
+      desc: 'तटीय सुंदरवन के ज्वारीय मिट्टी के फ्लैटों में मिट्टी के केकड़ों के पालन के लिए वित्तीय सहायता और इनपुट (बांस के पिंजरे, चारा) वितरण।',
+      eligibility: 'सुंदरवन क्षेत्र के स्वयं सहायता समूहों (SHGs) और सीमांत मछुआरों के लिए खुला है।'
+    },
+    'Jal Dharo Jal Bharo Carp Subsidy': {
+      title: 'जल धरो जल भरो कार्प सब्सिडी',
+      desc: 'मीठे पानी के कार्प बीज संचयन को एकीकृत करने के लिए 50% राज्य सब्सिडी के साथ सामुदायिक तालाबों की पुनः खुदाई।',
+      eligibility: 'पंचायत-अनुमोदित सामुदायिक तालाबों के लिए उपलब्ध है।'
+    },
+    'TN Seaweed Cultivation Rafts Scheme': {
+      title: 'तमिलनाडु समुद्री शैवाल खेती राफ्ट योजना',
+      desc: 'बांस के राफ्ट, रस्सियों और समुद्री शैवाल के पौधे खरीदने के लिए तटीय स्वयं सहायता समूहों (SHG) को 60% तक सब्सिडी।',
+      eligibility: 'तटीय गांवों के निवासियों तक सीमित। महिला सहकारी समितियों को प्राथमिकता दी जाती है।'
+    },
+    'PMMSY Cage Culture in Marine Waters': {
+      title: 'समुद्री पानी में पीएमएमएसवाई केज कल्चर',
+      desc: 'एशियाई सी बास (भेटकी) और पोम्पानो मछलियों के प्रजनन के लिए फ्लोटिंग मेटल पिंजरे स्थापित करने के लिए वित्तीय सहायता।',
+      eligibility: 'तमिलनाडु मैरीटाइम बोर्ड से पट्टा अनुमति और CMFRI से प्रशिक्षण प्रमाण पत्र की आवश्यकता है।'
+    },
+    'Subsidized Pokkali paddy-shrimp Cultivation': {
+      title: 'रियायती पोक्काली धान-झींगा खेती',
+      desc: 'एरनाकुलम और अलाप्पुझा में पारंपरिक पोक्काली जैविक धान-झींगा चक्र खेती का अभ्यास करने वाले किसानों के लिए ₹25,000 प्रति हेक्टेयर की वित्तीय सहायता।',
+      eligibility: 'प्रमाणित पोक्काली भूमि पार्सल तक सीमित। धान चक्र के दौरान शून्य कीटनाशक आवश्यक।'
+    },
+    'Kerala Fish Biofloc Subsidy': {
+      title: 'केरल मत्स्य बायोफ्लोकल सब्सिडी',
+      desc: 'तिलापिया और पंगासियस पालन के लिए 4-टैंक इनडोर बायोफ्लोक सेटअप के निर्माण के लिए 40% पूंजी सब्सिडी।',
+      eligibility: 'ADAK से 3 दिवसीय बायोफ्लोक प्रशिक्षण प्रमाण पत्र और बिजली विभाग की मंजूरी आवश्यक है।'
+    }
+  },
+  te: {
+    'PMMSY Subsidy for Shrimp Ponds': {
+      title: 'రొయ్యల చెరువులకు PMMSY సబ్సిడీ',
+      desc: 'కొత్త రొయ్యల చెరువుల నిర్మాణం, ఏరేటర్ల కొనుగోలు మరియు బయోఫ్లాక్ ఖర్చుల కోసం 40% నుండి 60% సబ్సిడీ పొందండి.',
+      eligibility: 'రిజిస్టర్డ్ CAA లైసెన్స్, భూమి యాజమాన్య పత్రం లేదా 7 సంవత్సరాల లీజు పత్రం అవసరం.'
+    },
+    'Subsidized Electricity for Aquaculture Ponds': {
+      title: 'ఆక్వా చెరువులకు రాయితీ విద్యుత్',
+      desc: 'ఆంధ్రప్రదేశ్ ప్రభుత్వం నమోదిత ఆక్వా చెరువులకు యూనిట్‌కు ₹1.50 విద్యుత్ రాయితీని అందిస్తుంది.',
+      eligibility: '10 ఎకరాల వరకు ఉన్న ఫారమ్‌లకు వర్తిస్తుంది. యాక్టివ్ CAA సర్టిఫికేట్ అవసరం.'
+    },
+    'West Bengal Crab Fattening Scheme': {
+      title: 'పశ్చిమ బెంగాల్ పీతల పెంపకం పథకం',
+      desc: 'సుందర్బన్స్ తీరప్రాంత మడ అడవులలో పీతల పెంపకం కోసం ఆర్థిక సహాయం మరియు పరికరాల పంపిణీ.',
+      eligibility: 'సుందర్బన్ ప్రాంతంలోని స్వయం సహాయక సంఘాలు (SHGలు) మరియు చిన్న మత్స్యకారులకు వర్తిస్తుంది.'
+    },
+    'Jal Dharo Jal Bharo Carp Subsidy': {
+      title: 'జల్ ధరో జల్ భరో కార్ప్ సబ్సిడీ',
+      desc: 'మంచినీటి చేప పిల్లల పెంపకాన్ని ప్రోత్సహించడానికి 50% ప్రభుత్వ సబ్సిడీతో చెరువుల పునరుద్ధరణ.',
+      eligibility: 'పంచాయతీ ఆమోదించిన కమ్యూనిటీ చెరువులకు వర్తిస్తుంది.'
+    },
+    'TN Seaweed Cultivation Rafts Scheme': {
+      title: 'సముద్రపు నాచు సాగు తెప్పల పథకం',
+      desc: 'వెదురు తెప్పలు, తాడులు మరియు నాచు ముక్కల కొనుగోలు కోసం తీరప్రాంత మహిళా సంఘాలకు 60% సబ్సిడీ.',
+      eligibility: 'తీరప్రాంత గ్రామాల నివాసితులకు మాత్రమే. మహిళా సహకార సంఘాలకు ప్రాధాన్యత.'
+    },
+    'PMMSY Cage Culture in Marine Waters': {
+      title: 'సముద్ర నీటిలో PMMSY కేజ్ కల్చర్',
+      desc: 'ఆసియా సీ బాస్ (భేట్కి) చేపల పెంపకం కోసం తేలియాడే ఇనుప బోనుల ఏర్పాటుకు ఆర్థిక సహాయం.',
+      eligibility: 'తమిళనాడు మారిటైమ్ బోర్డ్ నుండి లీజు అనుమతి మరియు CMFRI శిక్షణ పత్రం అవసరం.'
+    },
+    'Subsidized Pokkali paddy-shrimp Cultivation': {
+      title: 'రాయితీ పోక్కాలి వరి-రొయ్యల సాగు',
+      desc: 'సాంప్రదాయ పోక్కాలి సేంద్రీయ వరి-రొయ్యల మార్పిడి సాగు చేసే రైతుల కోసం హెక్టారుకు ₹25,000 ఆర్థిక సహాయం.',
+      eligibility: 'సర్టిఫైడ్ పోక్కాలి భూమి ఉన్నవారికి వర్తిస్తుంది. రసాయన మందులు వాడకూడదు.'
+    },
+    'Kerala Fish Biofloc Subsidy': {
+      title: 'కేరళ ఫిష్ బయోఫ్లాక్ సబ్సిడీ',
+      desc: 'తిలాపియా మరియు పంగేసియస్ సాగు కోసం 4-ట్యాంక్ బయోఫ్లాక్ యూనిట్ నిర్మాణానికి 40% సబ్సిడీ.',
+      eligibility: 'ADAK నుండి 3 రోజుల బయోఫ్లాక్ శిక్షణ పత్రం మరియు విద్యుత్ శాఖ అనుమతి అవసరం.'
+    }
+  },
+  ta: {
+    'PMMSY Subsidy for Shrimp Ponds': {
+      title: 'இறால் குளங்களுக்கான PMMSY மானியம்',
+      desc: 'புதிய இறால் குளங்கள் அமைக்க, காற்றோட்ட சாதனங்கள் வாங்க மற்றும் பயோஃப்ளாக் செலவுகளுக்கு 40% முதல் 60% மானியம் பெறலாம்.',
+      eligibility: 'பதிவு செய்யப்பட்ட CAA உரிமம், நில உரிமைப் பத்திரம் அல்லது 7 ஆண்டு குத்தகை பத்திரம் தேவை.'
+    },
+    'Subsidized Electricity for Aquaculture Ponds': {
+      title: 'மீன்வளர்ப்பு குளங்களுக்கான மானிய மின்சாரம்',
+      desc: 'ஆந்திர அரசு பதிவு செய்யப்பட்ட குளங்களுக்கு ஒரு யூனிட் ₹1.50 என்ற மானிய விலையில் மின்சாரம் வழங்குகிறது.',
+      eligibility: '10 ஏக்கர் வரையிலான குளங்களுக்குக் கிடைக்கும். செயலில் உள்ள CAA சான்றிதழ் தேவை.'
+    },
+    'West Bengal Crab Fattening Scheme': {
+      title: 'மேற்கு வங்க நண்டு வளர்ப்பு திட்டம்',
+      desc: 'சுந்தரவன கடலோரப் பகுதிகளில் நண்டு வளர்ப்பிற்கான நிதியுதவி மற்றும் உபகரணங்கள் (மூங்கில் கூண்டுகள், தீவனம்) வழங்குதல்.',
+      eligibility: 'சுந்தரவனப் பகுதி மகளிர் குழுக்கள் (SHG) மற்றும் சிறு மீனவர்களுக்கு மட்டுமே.'
+    },
+    'Jal Dharo Jal Bharo Carp Subsidy': {
+      title: 'ஜல் தாரோ ஜல் பாரோ கெண்டை மானியம்',
+      desc: 'நன்னீர் மீன் வளர்ப்பை ஒருங்கிணைக்க 50% அரசு மானியத்துடன் சமூகக் குளங்களை மீண்டும் தோண்டுதல்.',
+      eligibility: 'பஞ்சாயத்து அங்கீகரித்த சமூகக் குளங்களுக்குப் பொருந்தும்.'
+    },
+    'TN Seaweed Cultivation Rafts Scheme': {
+      title: 'கடல் பாசி வளர்ப்பு மிதவை திட்டம்',
+      desc: 'கடலோர மகளிர் குழுக்கள் மூங்கில் மிதவைகள், கயிறுகள் மற்றும் பாசி நாற்றுகள் வாங்க 60% வரை மானியம்.',
+      eligibility: 'கடலோர கிராம மக்களுக்கு மட்டுமே. இராமநாதபுரம் மாவட்ட கடல் பாசி திட்டத்தில் மகளிர் குழுக்களுக்கு முன்னுரிமை.',
+    },
+    'PMMSY Cage Culture in Marine Waters': {
+      title: 'கடல் நீரில் PMMSY கூண்டு மீன் வளர்ப்பு',
+      desc: 'கொடுவா மீன் வளர்ப்பிற்கான மிதக்கும் இரும்பு கூண்டுகளை அமைக்க நிதியுதவி வழங்குதல்.',
+      eligibility: 'தமிழ்நாடு கடல்சார் வாரியத்தின் குத்தகை அனுமதி மற்றும் CMFRI பயிற்சி சான்றிதழ் தேவை.'
+    },
+    'Subsidized Pokkali paddy-shrimp Cultivation': {
+      title: 'மானிய விலையில் பொக்காலி நெல்-இறால் வளர்ப்பு',
+      desc: 'பாரம்பரிய பொக்காலி நெல்-இறால் சுழற்சி முறையில் வளர்க்கும் விவசாயிகளுக்கு ஹெக்டேருக்கு ₹25,000 நிதியுதவி.',
+      eligibility: 'சான்றளிக்கப்பட்ட பொக்காலி நிலங்களுக்கு மட்டுமே. நெல் சுழற்சியின் போது பூச்சிக்கொல்லி பயன்படுத்தக் கூடாது.'
+    },
+    'Kerala Fish Biofloc Subsidy': {
+      title: 'கேரளா மீன் பயோஃப்ளாக் மானியம்',
+      desc: 'திலாப்பியா மற்றும் கெளுத்தி வளர்ப்பிற்கான 4-தொட்டி பயோஃப்ளாக் அலகு அமைக்க 40% மூலதன மானியம்.',
+      eligibility: 'ADAK அமைப்பின் 3 நாள் பயோஃப்ளாக் பயிற்சி சான்றிதழ் மற்றும் மின்சாரத் துறை அனுமதி தேவை.'
+    }
+  }
+};
+
+const rateNameLocalizations = {
+  hi: {
+    'Vannamei Shrimp (100 Count)': 'वन्नामेई झींगा (100 काउंट)',
+    'Vannamei Shrimp (60 Count)': 'वन्नामेई झींगा (60 काउंट)',
+    'Rohu Fish (1-2 kg size)': 'रोहू मछली (1-2 किलोग्राम आकार)',
+    'Catla Fish (Large 2kg+)': 'कतला मछली (बड़ी 2kg+)',
+    'Freshwater Scampi (50g)': 'मीठे पानी का स्कैम्पी (50 ग्राम)',
+    'Mud Crab (XXL 500g+)': 'मड केकड़ा (XXL 500g+)',
+    'Rohu Fish (Bazar Size)': 'रोहू मछली (बाजार आकार)',
+    'Hilsa Fish (500g)': 'हिलसा मछली (500 ग्राम)',
+    'Pangasius Catfish': 'पंगासियस कैटफ़िश',
+    'Kappaphycus Seaweed (Dry)': 'कप्पाफाइकस समुद्री शैवाल (सूखा)',
+    'Asian Seabass / Bhetki': 'एशियाई सी बास / भेटकी',
+    'Tiger Prawn (30 Count)': 'टाइगर झींगा (30 काउंट)',
+    'Tilapia Fish': 'तिलापिया मछली',
+    'Pearl Spot / Karimeen': 'पर्ल स्पॉट / करीमीन',
+    'Tilapia Fish (Biofloc)': 'तिलापिया मछली (बायोफ्लोक)',
+    'Mrigal Bazar Carp': 'मृगल बाजार कार्प',
+    'Bhetki / Seabass': 'भेटकी / सी बास',
+    'Rohu Fish (Medium)': 'रोहू मछली (मध्यम)',
+    'Catla Fish (Medium)': 'कतला मछली (मध्यम)'
+  },
+  te: {
+    'Vannamei Shrimp (100 Count)': 'పసిఫిక్ వైట్ రొయ్య (100 కౌంట్)',
+    'Vannamei Shrimp (60 Count)': 'పసిఫిక్ వైట్ రొయ్య (60 కౌంట్)',
+    'Rohu Fish (1-2 kg size)': 'రోహు చేప (1-2 కేజీలు)',
+    'Catla Fish (Large 2kg+)': 'కట్ల చేప (పెద్దది 2kg+)',
+    'Freshwater Scampi (50g)': 'మంచినీటి రొయ్య (50 గ్రా)',
+    'Mud Crab (XXL 500g+)': 'మడ్ పీత (XXL 500g+)',
+    'Rohu Fish (Bazar Size)': 'రోహు చేప (బజార్ సైజ్)',
+    'Hilsa Fish (500g)': 'పులస / హిల్సా చేప (500 గ్రా)',
+    'Pangasius Catfish': 'పంగేసియస్ చేప',
+    'Kappaphycus Seaweed (Dry)': 'సముద్రపు నాచు (ఎండినది)',
+    'Asian Seabass / Bhetki': 'ఆసియా సీ బాస్ / భేట్కి',
+    'Tiger Prawn (30 Count)': 'టైగర్ రొయ్య (30 కౌంట్)',
+    'Tilapia Fish': 'తిలాపియా చేప',
+    'Pearl Spot / Karimeen': 'కరిమీన్ చేప',
+    'Tilapia Fish (Biofloc)': 'తిలాపియా చేప (బయోఫ్లాక్)',
+    'Mrigal Bazar Carp': 'మృగాల్ చేప',
+    'Bhetki / Seabass': 'భేట్కి / సీ బాస్',
+    'Rohu Fish (Medium)': 'రోహు చేప (మధ్యమం)',
+    'Catla Fish (Medium)': 'కట్ల చేప (మధ్యమం)'
+  },
+  ta: {
+    'Vannamei Shrimp (100 Count)': 'வெள்ளை இறால் (100 எண்ணிக்கை)',
+    'Vannamei Shrimp (60 Count)': 'வெள்ளை இறால் (60 எண்ணிக்கை)',
+    'Rohu Fish (1-2 kg size)': 'ரோகு மீன் (1-2 கிலோ அளவு)',
+    'Catla Fish (Large 2kg+)': 'கட்லா மீன் (பெரியது 2kg+)',
+    'Freshwater Scampi (50g)': 'நன்னீர் இறால் (50 கிராம்)',
+    'Mud Crab (XXL 500g+)': 'சேற்று நண்டு (XXL 500g+)',
+    'Rohu Fish (Bazar Size)': 'ரோகு மீன் (சந்தை அளவு)',
+    'Hilsa Fish (500g)': 'ஹில்சா மீன் (500 கிராம்)',
+    'Pangasius Catfish': 'கெளுத்தி மீன்',
+    'Kappaphycus Seaweed (Dry)': 'கடல் பாசி (உலர்ந்தது)',
+    'Asian Seabass / Bhetki': 'கொடுவா மீன் / பெட்கி',
+    'Tiger Prawn (30 Count)': 'டைகர் இறால் (30 எண்ணிக்கை)',
+    'Tilapia Fish': 'திலாப்பியா மீன்',
+    'Pearl Spot / Karimeen': 'கரிமீன் மீன்',
+    'Tilapia Fish (Biofloc)': 'திலாப்பியா மீன் (பயோஃப்ளாக்)',
+    'Mrigal Bazar Carp': 'மிர்கால் மீன்',
+    'Bhetki / Seabass': 'கொடுவா / பெட்கி மீன்',
+    'Rohu Fish (Medium)': 'ரோகு மீன் (நடுத்தரம்)',
+    'Catla Fish (Medium)': 'கட்லா மீன் (நடுத்தரம்)'
+  }
+};
+
+const newsLocalizations = {
+  hi: {
+    'Salinity Alert in Krishna Delta Ponds': {
+      title: 'कृष्णा डेल्टा तालाबों में लवणता की चेतावनी',
+      desc: 'कृष्णा जिले में भारी मानसूनी जलभराव के कारण तालाब की लवणता [6-11] पीपीटी से नीचे गिर गई है। किसानों को सलाह दी जाती है कि वे पानी के आदान-प्रदान को सीमित करें और कृषि नमक ([100-150] किलोग्राम/एकड़) डालें।'
+    },
+    'Bhimavaram Seafood Export Hub Expansion': {
+      title: 'भीमावरम सीफूड निर्यात हब का विस्तार',
+      desc: 'राज्य मत्स्य विभाग ने भीमावरम में [2-4] नए कोल्ड स्टोरेज परिसरों को मंजूरी दी है। इससे स्थानीय किसानों के लिए परिवहन समय [15-30]% कम हो जाएगा।'
+    },
+    'Nellore White Spot Disease Advisory': {
+      title: 'नेल्लोर व्हाइट स्पॉट रोग सलाहकार',
+      desc: 'नेल्लोर जिले में बढ़ती आर्द्रता से डब्ल्यूएसएसवी प्रकोप का खतरा [20-40]% बढ़ जाता है। किसानों को सख्त जैव सुरक्षा अपनानी चाहिए।'
+    },
+    'Nellore Feed Prices Subsidized': {
+      title: 'नेल्लोर फ़ीड कीमतों में सब्सिडी',
+      desc: 'एपी सरकार ने जिले के पंजीकृत छोटे किसानों के लिए पेलेट फीड पर ₹[2-4]/किग्रा सब्सिडी की घोषणा की।'
+    },
+    'Kakdwip Mud Crab Hatchery Seed Distribution': {
+      title: 'काकद्वीप मड केकड़ा हैचरी बीज वितरण',
+      desc: 'काकद्वीप में वाणिज्यिक मड केकड़ा हैचरी ने केकड़े का वितरण शुरू कर दिया है। किसान [30-50]% कम कीमत पर हैचरी-उठाए केकड़े खरीद सकते हैं।'
+    },
+    'Carp Diseases Alert in East Kolkata Wetlands': {
+      title: 'पूर्वी कोलकाता वेटलैंड्स में कार्प रोगों की चेतावनी',
+      desc: 'उच्च अपशिष्ट जल के कारण अर्गुलोसिस (मछली जूँ) और पंख सड़ने की शिकायतें। किसानों को चूना ([100-150] किग्रा/एकड़) डालने की सलाह दी जाती है।'
+    },
+    'Ramanathapuram Seaweed Park Approved': {
+      title: 'रामनाथपुरम समुद्री शैवाल पार्क स्वीकृत',
+      desc: 'केंद्रीय मंत्रिमंडल ने रामनाथपुरम में ₹127 करोड़ के समुद्री शैवाल पार्क को मंजूरी दी। पार्क में ऊतक संवर्धन प्रयोगशालाएं और [3-5] प्रसंस्करण सुविधाएं होंगी।'
+    },
+    'Coastal Regulation Zone Advisory for Shrimps': {
+      title: 'झींगा पालन के लिए तटीय विनियमन क्षेत्र सलाहकार',
+      desc: 'किसानों को अपने तटीय झींगा फार्म के निर्देशांकों को तटीय एक्वाकल्चर प्राधिकरण (CAA) के साथ [10-20] दिनों के भीतर पंजीकृत करना होगा।'
+    },
+    'Cuddalore Oxygen Depletion Risk': {
+      title: 'कुड्डालोर ऑक्सीजन की कमी का खतरा',
+      desc: 'कुड्डालोर तालाबों में उच्च सतह के तापमान के कारण सुबह-सुबह घुलित ऑक्सीजन का स्तर [2-4] मिलीग्राम/लीटर से नीचे गिर रहा है। वातन बढ़ाएँ।'
+    },
+    'Monsoon Backwater Floods Alert': {
+      title: 'मानसून बैकवाटर बाढ़ चेतावनी',
+      desc: 'भारी बारिश के कारण बैकवाटर की लवणता तेजी से गिर रही है। पोक्काली झींगा किसानों को सलाह दी जाती है कि वे फसल की कटाई [5-10] दिन पहले करें।'
+    }
+  },
+  te: {
+    'Salinity Alert in Krishna Delta Ponds': {
+      title: 'కృష్ణా డెల్టా చెరువులలో లవణీయత హెచ్చరిక',
+      desc: 'కృష్ణా జిల్లాలో భారీ వర్షాల కారణంగా లవణీయత [6-11] ppt కంటే తగ్గింది. రైతులు నీటి మార్పిడిని తగ్గించి, ఎకరానికి [100-150] కిలోల ఉప్పు చల్లాలి.'
+    },
+    'Bhimavaram Seafood Export Hub Expansion': {
+      title: 'భీమవరం సీఫుడ్ ఎగుమతి హబ్ విస్తరణ',
+      desc: 'భీమవరంలో [2-4] కొత్త కోల్డ్ స్టోరేజ్ కాంప్లెక్స్‌లకు ఆమోదం. ఇది రవాణా సమయాన్ని [15-30]% తగ్గిస్తుంది.'
+    },
+    'Nellore White Spot Disease Advisory': {
+      title: 'నెల్లూరు వైట్ స్పాట్ వ్యాధి హెచ్చరిక',
+      desc: 'నెల్లూరు జిల్లాలో తేమ పెరగడం వల్ల WSSV వ్యాప్తి ముప్పు [20-40]% పెరుగుతుంది. రైతులు కఠినమైన బయోసెక్యూరిటీని పాటించాలి.'
+    },
+    'Nellore Feed Prices Subsidized': {
+      title: 'నెల్లూరు మేత ధరలపై సబ్సిడీ',
+      desc: 'నమోదిత ఆక్వా రైతులకు మేతపై కిలోకు ₹[2-4] సబ్సిడీని ప్రభుత్వం ప్రకటించింది.'
+    },
+    'Kakdwip Mud Crab Hatchery Seed Distribution': {
+      title: 'కక్‌ద్వీప్ మడ్ పీతల హేచరీ పంపిణీ',
+      desc: 'కక్‌ద్వీప్‌లోని హేచరీ నుండి పీత పిల్లల పంపిణీ ప్రారంభమైంది. రైతులు [30-50]% తక్కువ ధరకే వీటిని పొందవచ్చు.'
+    },
+    'Carp Diseases Alert in East Kolkata Wetlands': {
+      title: 'చేపల వ్యాధుల హెచ్చరిక',
+      desc: 'మురుగునీటి భారాల వల్ల చేపలకు పేను వ్యాధి మరియు తోక కుళ్లుడు సంభవించాయి. ఎకరానికి [100-150] కిలోల సున్నం చల్లాలి.'
+    },
+    'Ramanathapuram Seaweed Park Approved': {
+      title: 'రామనాథపురం సముద్రపు నాచు పార్క్ ఆమోదం',
+      desc: 'రామనాథపురంలో ₹127 కోట్ల సముద్రపు నాచు పార్కును కేంద్ర కేబినెట్ ఆమోదించింది. ఇక్కడ టిష్యూ కల్చర్ ల్యాబ్‌లు ఉంటాయి.'
+    },
+    'Coastal Regulation Zone Advisory for Shrimps': {
+      title: 'రొయ్యల సాగుదారులకు తీర ప్రాంత నియంత్రణ సలహా',
+      desc: 'రైతులు తమ రొయ్యల చెరువు వివరాలను [10-20] రోజుల్లోగా CAA వద్ద నమోదు చేసుకోవాలి.'
+    },
+    'Cuddalore Oxygen Depletion Risk': {
+      title: 'కడలూరు ఆక్సిజన్ క్షీణత ముప్పు',
+      desc: 'అధిక ఉష్ణోగ్రతల వల్ల తెల్లవారుజామున ఆక్సిజన్ స్థాయి [2-4] mg/L కంటే పడిపోతోంది. ఏరేటర్ల సమయాన్ని [2-4] గంటలు పెంచండి.'
+    },
+    'Monsoon Backwater Floods Alert': {
+      title: 'రుతుపవనాల బ్యాక్ వాటర్ వరదల హెచ్చరిక',
+      desc: 'భారీ వర్షాల వల్ల లవణీయత పడిపోతోంది. పొక్కాలి రొయ్యల రైతులు పంటను [5-10] రోజులు ముందుగానే హార్వెస్ట్ చేసుకోవాలి.'
+    }
+  },
+  ta: {
+    'Salinity Alert in Krishna Delta Ponds': {
+      title: 'கிருஷ்ணா டெல்டா குளங்களில் உவர்ப்புத்தன்மை எச்சரிக்கை',
+      desc: 'கனமழை காரணமாக கிருஷ்ணா மாவட்டத்தில் உவர்ப்புத்தன்மை [6-11] ppt ஆக குறைந்துள்ளது. விவசாயிகள் எக்டேருக்கு [100-150] கிலோ உப்பு பயன்படுத்தவும்.'
+    },
+    'Bhimavaram Seafood Export Hub Expansion': {
+      title: 'பீமாவரம் கடல் உணவு ஏற்றுமதி மையம் விரிவாக்கம்',
+      desc: 'பீமாவரத்தில் [2-4] புதிய குளிர்பதன கிடங்குகளுக்கு ஒப்புதல். இது போக்குவரத்து நேரத்தை [15-30]% குறைக்கும்.'
+    },
+    'Nellore White Spot Disease Advisory': {
+      title: 'நெல்லூர் வெள்ளைப்புள்ளி நோய் எச்சரிக்கை',
+      desc: 'நெல்லூர் மாவட்டத்தில் உவர்ப்புத்தன்மை மற்றும் ஈரப்பதம் அதிகரிப்பு காரணமாக WSSV பாதிப்பு [20-40]% அதிகரிக்கலாம். கடுமையான உயிர் பாதுகாப்பு தேவை.'
+    },
+    'Nellore Feed Prices Subsidized': {
+      title: 'நெல்லூர் தீவன விலையில் மானியம்',
+      desc: 'பதிவு செய்யப்பட்ட சிறு விவசாயிகளுக்கு தீவன விலையில் கிலோவுக்கு ₹[2-4] மானியம் வழங்க அரசு முடிவு செய்துள்ளது.'
+    },
+    'Kakdwip Mud Crab Hatchery Seed Distribution': {
+      title: 'காக்ட்வீப் நண்டு குஞ்சுகள் விநியோகம்',
+      desc: 'காக்ட்வீப்பில் வணிக ரீதியான நண்டு குஞ்சு விநியோகம் தொடங்கியுள்ளது. விவசாயிகள் [30-50]% குறைந்த விலையில் பெறலாம்.'
+    },
+    'Carp Diseases Alert in East Kolkata Wetlands': {
+      title: 'கெண்டை மீன் நோய் எச்சரிக்கை',
+      desc: 'அழுக்கு நீர் காரணமாக மீன்களுக்கு பேன் மற்றும் வால் அழுகல் பாதிப்பு. எக்டேருக்கு [100-150] கிலோ சுண்ணாம்பு பயன்படுத்தவும்.'
+    },
+    'Ramanathapuram Seaweed Park Approved': {
+      title: 'இராமநாதபுரம் கடல் பாசி பூங்கா ஒப்புதல்',
+      desc: 'இராமநாதபுரத்தில் ₹127 கோடியில் கடல் பாசி பூங்காவிற்கு மத்திய அமைச்சரவை ஒப்புதல் அளித்துள்ளது.'
+    },
+    'Coastal Regulation Zone Advisory for Shrimps': {
+      title: 'கடலோர ஒழுங்குமுறை எச்சரிக்கை',
+      desc: 'விவசாயிகள் தங்கள் குளங்களை [10-20] நாட்களுக்குள் CAA-வில் பதிவு செய்து சான்றிதழ் பெற வேண்டும்.'
+    },
+    'Cuddalore Oxygen Depletion Risk': {
+      title: 'கடலூர் ஆக்ஸிஜன் குறைவு அபாயம்',
+      desc: 'அதிக வெப்பநிலையால் அதிகாலையில் ஆக்ஸிஜன் அளவு [2-4] mg/L ஆக குறைகிறது. காற்றோட்ட நேரத்தை [2-4] மணி நேரம் அதிகரிக்கவும்.'
+    },
+    'Monsoon Backwater Floods Alert': {
+      title: 'மழைக்கால வெள்ள எச்சரிக்கை',
+      desc: 'கனமழையால் உவர்ப்புத்தன்மை குறைகிறது. பொக்காலி விவசாயிகள் அறுவடையை [5-10] நாட்கள் முன்னதாகவே செய்யவும்.'
+    }
+  }
+};
 
 export default function Technology() {
+  const { t, i18n } = useTranslation();
   const sectionRef = useRef(null);
   const [selectedState, setSelectedState] = useState('Andhra Pradesh');
-  const [selectedScheme, setSelectedScheme] = useState(null); // for showing eligibility popup
+  const [selectedScheme, setSelectedScheme] = useState(null);
   const [liveFeed, setLiveFeed] = useState({});
   const [loadingFeed, setLoadingFeed] = useState(false);
   const [isRefreshingSilent, setIsRefreshingSilent] = useState(false);
@@ -343,6 +669,37 @@ export default function Technology() {
     ]
   };
 
+  // Localized helpers
+  const getLocalizedRateName = (name) => {
+    const lang = i18n.language;
+    return (rateNameLocalizations[lang] && rateNameLocalizations[lang][name]) || name;
+  };
+
+  const getLocalizedNews = (item) => {
+    const lang = i18n.language;
+    if (newsLocalizations[lang] && newsLocalizations[lang][item.title]) {
+      return {
+        ...item,
+        title: newsLocalizations[lang][item.title].title,
+        desc: newsLocalizations[lang][item.title].desc
+      };
+    }
+    return item;
+  };
+
+  const getLocalizedScheme = (scheme) => {
+    const lang = i18n.language;
+    if (schemeLocalizations[lang] && schemeLocalizations[lang][scheme.title]) {
+      return {
+        ...scheme,
+        title: schemeLocalizations[lang][scheme.title].title,
+        desc: schemeLocalizations[lang][scheme.title].desc,
+        eligibility: schemeLocalizations[lang][scheme.title].eligibility
+      };
+    }
+    return scheme;
+  };
+
   // Live updates trigger
   const updateFeedData = async (stateName, silent = false) => {
     if (silent) {
@@ -406,11 +763,14 @@ export default function Technology() {
           const shuffledNews = [...base.newsPool].sort(() => 0.5 - Math.random());
           const selectedNews = shuffledNews.slice(0, 2);
           const todayDate = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-          updatedNews = selectedNews.map(newsItem => ({
-            ...newsItem,
-            desc: randomizeText(newsItem.desc),
-            date: todayDate
-          }));
+          updatedNews = selectedNews.map(newsItem => {
+            const locItem = getLocalizedNews(newsItem);
+            return {
+              ...locItem,
+              desc: randomizeText(locItem.desc),
+              date: todayDate
+            };
+          });
         }
 
         setLiveFeed(prev => ({
@@ -445,7 +805,7 @@ export default function Technology() {
           const change = fluctuation !== 0 ? `${fluctuation > 0 ? '+' : ''}₹${Math.abs(fluctuation)}` : '0';
           
           return {
-            name: rate.name,
+            name: getLocalizedRateName(rate.name),
             price: `₹${finalPrice} / kg`,
             trend,
             change
@@ -457,11 +817,14 @@ export default function Technology() {
         const selectedNews = shuffledNews.slice(0, 2);
 
         const todayDate = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-        const updatedNews = selectedNews.map(newsItem => ({
-          ...newsItem,
-          desc: randomizeText(newsItem.desc),
-          date: todayDate
-        }));
+        const updatedNews = selectedNews.map(newsItem => {
+          const locItem = getLocalizedNews(newsItem);
+          return {
+            ...locItem,
+            desc: randomizeText(locItem.desc),
+            date: todayDate
+          };
+        });
 
         setLiveFeed(prev => ({
           ...prev,
@@ -480,7 +843,7 @@ export default function Technology() {
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ stateName })
+          body: JSON.stringify({ stateName, language: i18n.language })
         });
 
         if (!response.ok) throw new Error("API call failed");
@@ -496,8 +859,18 @@ export default function Technology() {
       } else {
         const url = `${endpoint.replace(/\/$/, "")}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`;
         
+        const languageNames = {
+          en: 'English',
+          hi: 'Hindi (written in Devanagari script)',
+          te: 'Telugu (written in Telugu script)',
+          ta: 'Tamil (written in Tamil script)'
+        };
+        const currentLanguage = languageNames[i18n.language] || 'English';
+
         const promptText = `Generate live wholesale aquaculture market rates and regional pond warning alerts for the state of: ${stateName}, India.
 Current Date: ${new Date().toLocaleDateString('en-IN')}
+
+IMPORTANT: The values of the keys "name" (inside rates), "title" (inside news), and "desc" (inside news) MUST be fully translated and written in the ${currentLanguage} language. Keep the JSON keys exactly in English (e.g. "rates", "name", "price", "trend", "change", "news", "title", "date", "desc", "alertLevel").
 
 Return strictly as a JSON object with the following schema:
 {
@@ -561,7 +934,7 @@ Ensure the JSON is valid. Respond ONLY with the JSON object. Do not include mark
           const fluctuation = Math.floor(Math.random() * 21) - 10;
           const finalPrice = Math.max(15, rate.basePrice + fluctuation);
           return {
-            name: rate.name,
+            name: getLocalizedRateName(rate.name),
             price: `₹${finalPrice} / kg`,
             trend: fluctuation > 0 ? 'up' : (fluctuation < 0 ? 'down' : 'stable'),
             change: fluctuation !== 0 ? `${fluctuation > 0 ? '+' : ''}₹${Math.abs(fluctuation)}` : '0'
@@ -571,11 +944,14 @@ Ensure the JSON is valid. Respond ONLY with the JSON object. Do not include mark
         const shuffledNews = [...base.newsPool].sort(() => 0.5 - Math.random());
         const selectedNews = shuffledNews.slice(0, 2);
         const todayDate = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-        const updatedNews = selectedNews.map(newsItem => ({
-          ...newsItem,
-          desc: randomizeText(newsItem.desc),
-          date: todayDate
-        }));
+        const updatedNews = selectedNews.map(newsItem => {
+          const locItem = getLocalizedNews(newsItem);
+          return {
+            ...locItem,
+            desc: randomizeText(locItem.desc),
+            date: todayDate
+          };
+        });
 
         setLiveFeed(prev => ({
           ...prev,
@@ -604,22 +980,30 @@ Ensure the JSON is valid. Respond ONLY with the JSON object. Do not include mark
   const activeData = liveFeed[selectedState] || { rates: [], news: [], lastUpdated: '' };
   const activeSchemes = staticSchemes[selectedState] || [];
 
+  const stateLabelMap = {
+    'Andhra Pradesh': t('regions.ap') || 'Andhra Pradesh',
+    'West Bengal': t('regions.wb') || 'West Bengal',
+    'Tamil Nadu': t('regions.tn') || 'Tamil Nadu',
+    'Kerala': t('regions.kl') || 'Kerala',
+    'Odisha': t('regions.od') || 'Odisha'
+  };
+
   return (
     <section className="technology" id="technology" ref={sectionRef}>
       <div className="container">
         <div className="section-header reveal">
           <div className="section-badge">
             <span className="badge-dot"></span>
-            Fisheries Support
+            {t('technology.badge') || 'Fisheries Support'}
           </div>
-          <h2 className="section-title">State-Wise Farmer Support Hub</h2>
+          <h2 className="section-title">{t('technology.title') || 'State-Wise Farmer Support Hub'}</h2>
           <p className="section-subtitle">
-            Toggle state locations to view current market rates, government subsidy schemes, and local fisheries warnings.
+            {t('technology.subtitle') || 'Toggle state locations to view current market rates, government subsidy schemes, and local fisheries warnings.'}
           </p>
 
           {/* Premium Dropdown Selector & Refresh Trigger */}
           <div className="state-select-container">
-            <label>📍 Select Farming Region:</label>
+            <label>📍 {t('technology.selectRegion') || 'Select Farming Region:'}</label>
             <select 
               value={selectedState} 
               onChange={(e) => setSelectedState(e.target.value)} 
@@ -627,7 +1011,7 @@ Ensure the JSON is valid. Respond ONLY with the JSON object. Do not include mark
               disabled={loadingFeed || isRefreshingSilent}
             >
               {Object.keys(staticSchemes).map(state => (
-                <option key={state} value={state}>{state}</option>
+                <option key={state} value={state}>{stateLabelMap[state] || state}</option>
               ))}
             </select>
 
@@ -637,7 +1021,7 @@ Ensure the JSON is valid. Respond ONLY with the JSON object. Do not include mark
               disabled={loadingFeed || isRefreshingSilent}
               style={{ width: 'auto', padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '8px' }}
             >
-              🔄 {loadingFeed || isRefreshingSilent ? 'Updating Feed...' : 'Refresh Live Data'}
+              🔄 {loadingFeed || isRefreshingSilent ? (t('technology.updatingBtn') || 'Updating Feed...') : (t('technology.refreshBtn') || 'Refresh Live Data')}
             </button>
           </div>
           
@@ -657,7 +1041,7 @@ Ensure the JSON is valid. Respond ONLY with the JSON object. Do not include mark
               }}>
                 <span className={`pulse-dot ${isRefreshingSilent || loadingFeed ? 'active' : ''}`}></span>
                 <span>
-                  {isRefreshingSilent || loadingFeed ? '⚡ Fetching latest updates...' : `⚡ Live Feed Ticker • Last Updated: ${activeData.lastUpdated}`}
+                  {isRefreshingSilent || loadingFeed ? (t('technology.fetchingUpdates') || 'Fetching latest updates...') : `${t('technology.liveFeedTicker') || 'Live Feed Ticker'} • ${t('technology.lastUpdated') || 'Last Updated'}: ${activeData.lastUpdated}`}
                 </span>
               </span>
             </div>
@@ -668,26 +1052,29 @@ Ensure the JSON is valid. Respond ONLY with the JSON object. Do not include mark
         <div className="support-hub-grid">
           {/* Column 1: Government Subsidies */}
           <div className="support-col schemes-column reveal">
-            <h3>🏛️ Subsidies & Schemes</h3>
+            <h3>🏛️ {t('technology.subsidiesTitle') || 'Subsidies & Schemes'}</h3>
             <div className="col-content">
-              {activeSchemes.map((scheme, i) => (
-                <div key={i} className="scheme-card glass-card">
-                  <h4>{scheme.title}</h4>
-                  <p>{scheme.desc}</p>
-                  <button 
-                    className="eligibility-btn"
-                    onClick={() => setSelectedScheme(scheme)}
-                  >
-                    📄 Check Eligibility
-                  </button>
-                </div>
-              ))}
+              {activeSchemes.map((rawScheme, i) => {
+                const scheme = getLocalizedScheme(rawScheme);
+                return (
+                  <div key={i} className="scheme-card glass-card">
+                    <h4>{scheme.title}</h4>
+                    <p>{scheme.desc}</p>
+                    <button 
+                      className="eligibility-btn"
+                      onClick={() => setSelectedScheme(rawScheme)}
+                    >
+                      📄 {t('technology.checkEligibility') || 'Check Eligibility'}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           {/* Column 2: Seafood Wholesale Market Rates */}
           <div className="support-col rates-column reveal" style={{ transitionDelay: '0.1s' }}>
-            <h3>📈 Wholesale Market Rates</h3>
+            <h3>📈 {t('technology.marketRatesTitle') || 'Wholesale Market Rates'}</h3>
             <div className="col-content">
               {loadingFeed ? (
                 <div className="rates-table glass-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', minHeight: '300px' }}>
@@ -696,9 +1083,9 @@ Ensure the JSON is valid. Respond ONLY with the JSON object. Do not include mark
               ) : (
                 <div className="rates-table glass-card">
                   <div className="rates-header-row">
-                    <span>Species / Count</span>
-                    <span>Price (Est.)</span>
-                    <span>Trend</span>
+                    <span>{t('technology.speciesCount') || 'Species / Count'}</span>
+                    <span>{t('technology.priceEst') || 'Price (Est.)'}</span>
+                    <span>{t('technology.trend') || 'Trend'}</span>
                   </div>
                   {activeData.rates.map((rate, i) => (
                     <div key={i} className="rate-row">
@@ -707,19 +1094,19 @@ Ensure the JSON is valid. Respond ONLY with the JSON object. Do not include mark
                       <span className={`trend-badge trend-${rate.trend}`}>
                         {rate.trend === 'up' && `▲ ${rate.change}`}
                         {rate.trend === 'down' && `▼ ${rate.change}`}
-                        {rate.trend === 'stable' && '● Stable'}
+                        {rate.trend === 'stable' && `● ${t('technology.stable') || 'Stable'}`}
                       </span>
                     </div>
                   ))}
                 </div>
               )}
-              <p className="rates-disclaimer">⚠️ Market rates fluctuate daily based on landings and cold chain availability. Consult local brokers for final trade agreements.</p>
+              <p className="rates-disclaimer">⚠️ {t('technology.ratesDisclaimer') || 'Market rates fluctuate daily based on landings and cold chain availability. Consult local brokers for final trade agreements.'}</p>
             </div>
           </div>
 
           {/* Column 3: Pond Alerts & Regional News */}
           <div className="support-col news-column reveal" style={{ transitionDelay: '0.2s' }}>
-            <h3>📰 Pond Alerts & News</h3>
+            <h3>📰 {t('technology.newsAlertsTitle') || 'Pond Alerts & News'}</h3>
             <div className="col-content">
               {loadingFeed ? (
                 <div className="glass-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', minHeight: '300px' }}>
@@ -731,9 +1118,9 @@ Ensure the JSON is valid. Respond ONLY with the JSON object. Do not include mark
                     <div className="news-meta">
                       <span className="news-date">📅 {item.date}</span>
                       <span className={`alert-label label-${item.alertLevel}`}>
-                        {item.alertLevel === 'danger' && '🔴 Critical'}
-                        {item.alertLevel === 'warning' && '🟡 Warning'}
-                        {item.alertLevel === 'info' && '🔵 Update'}
+                        {item.alertLevel === 'danger' && `🔴 ${t('about.waterMeter.critical') || 'Critical'}`}
+                        {item.alertLevel === 'warning' && `🟡 ${t('about.waterMeter.warning') || 'Warning'}`}
+                        {item.alertLevel === 'info' && `🔵 ${t('technology.newsUpdate') || 'Update'}`}
                       </span>
                     </div>
                     <h4>{item.title}</h4>
@@ -747,50 +1134,53 @@ Ensure the JSON is valid. Respond ONLY with the JSON object. Do not include mark
       </div>
 
       {/* Eligibility Guide Modal Popup */}
-      {selectedScheme && (
-        <div className="services-modal-backdrop" onClick={() => setSelectedScheme(null)}>
-          <div className="services-modal-content glass-card" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close-btn" onClick={() => setSelectedScheme(null)}>×</button>
+      {selectedScheme && (() => {
+        const scheme = getLocalizedScheme(selectedScheme);
+        return (
+          <div className="services-modal-backdrop" onClick={() => setSelectedScheme(null)}>
+            <div className="services-modal-content glass-card" onClick={(e) => e.stopPropagation()}>
+              <button className="modal-close-btn" onClick={() => setSelectedScheme(null)}>×</button>
 
-            <div className="modal-header">
-              <span className="modal-emoji">📋</span>
-              <div>
-                <h2>Eligibility Guidelines</h2>
-                <div className="scientific-name">Subsidies & Direct Benefit Transfer</div>
+              <div className="modal-header">
+                <span className="modal-emoji">📋</span>
+                <div>
+                  <h2>{t('technology.eligibilityPopup.title') || 'Eligibility Guidelines'}</h2>
+                  <div className="scientific-name">{t('technology.eligibilityPopup.description') || 'Subsidies & Direct Benefit Transfer'}</div>
+                </div>
               </div>
-            </div>
 
-            <div className="modal-body" style={{ overflowY: 'visible' }}>
-              <div className="eligibility-box" style={{ background: 'rgba(0, 212, 170, 0.05)', border: '1px solid rgba(0, 212, 170, 0.15)', padding: '20px', borderRadius: '8px' }}>
-                <h4 style={{ color: '#fff', fontSize: '1.05rem', marginBottom: '10px' }}>{selectedScheme.title}</h4>
-                <p style={{ fontSize: '0.92rem', color: 'rgba(224, 232, 240, 0.75)', lineHeight: '1.6', marginBottom: '20px' }}>{selectedScheme.desc}</p>
-                
-                <h5 style={{ color: 'var(--aqua-primary)', fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>📄 Required Documents & Rules:</h5>
-                <p style={{ fontSize: '0.88rem', color: '#e0fcf5', lineHeight: '1.6' }}>{selectedScheme.eligibility}</p>
+              <div className="modal-body" style={{ overflowY: 'visible' }}>
+                <div className="eligibility-box" style={{ background: 'rgba(0, 212, 170, 0.05)', border: '1px solid rgba(0, 212, 170, 0.15)', padding: '20px', borderRadius: '8px' }}>
+                  <h4 style={{ color: '#fff', fontSize: '1.05rem', marginBottom: '10px' }}>{scheme.title}</h4>
+                  <p style={{ fontSize: '0.92rem', color: 'rgba(224, 232, 240, 0.75)', lineHeight: '1.6', marginBottom: '20px' }}>{scheme.desc}</p>
+                  
+                  <h5 style={{ color: 'var(--aqua-primary)', fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>📄 {t('technology.eligibilityPopup.criteria') || 'Required Documents & Rules:'}:</h5>
+                  <p style={{ fontSize: '0.88rem', color: '#e0fcf5', lineHeight: '1.6' }}>{scheme.eligibility}</p>
+                </div>
               </div>
-            </div>
 
-            <div className="modal-actions-footer" style={{ borderTop: 'none', paddingTop: '20px', gap: '16px' }}>
-              <button 
-                onClick={() => setSelectedScheme(null)} 
-                className="recalculate-btn"
-                style={{ flex: 1, margin: 0 }}
-              >
-                Close Window
-              </button>
-              <a 
-                href={selectedScheme.link} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="form-submit-btn"
-                style={{ flex: 1, margin: 0, textDecoration: 'none', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '45px', padding: 0 }}
-              >
-                Apply on Portal ↗
-              </a>
+              <div className="modal-actions-footer" style={{ borderTop: 'none', paddingTop: '20px', gap: '16px' }}>
+                <button 
+                  onClick={() => setSelectedScheme(null)} 
+                  className="recalculate-btn"
+                  style={{ flex: 1, margin: 0 }}
+                >
+                  {t('technology.eligibilityPopup.close') || 'Close'}
+                </button>
+                <a 
+                  href={scheme.link} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="form-submit-btn"
+                  style={{ flex: 1, margin: 0, textDecoration: 'none', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '45px', padding: 0 }}
+                >
+                  {t('technology.eligibilityPopup.applyBtn') || 'Apply on Portal ↗'}
+                </a>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </section>
   );
 }

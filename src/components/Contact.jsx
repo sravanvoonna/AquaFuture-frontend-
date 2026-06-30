@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const initialMessages = {
   'en-IN': 'Hello! I am your **AquaFuture AI Advisor**, your expert marine biology and aquaculture consultant. Ask me about optimizing FCR, water chemistry metrics, disease diagnostics, or stocking density limits. How can I help you today?',
@@ -11,6 +12,7 @@ export default function Contact() {
   const sectionRef = useRef(null);
   const messagesEndRef = useRef(null);
   const audioRef = useRef(null);
+  const { t, i18n } = useTranslation();
   
   // Environment credentials
   const apiKey = import.meta.env.VITE_AZURE_OPENAI_KEY;
@@ -35,6 +37,25 @@ export default function Contact() {
   const [voiceLanguage, setVoiceLanguage] = useState('en-IN');
   const [autoSpeak, setAutoSpeak] = useState(false);
   const [chatError, setChatError] = useState('');
+
+  // Sync chatbot language state with top language selector
+  useEffect(() => {
+    const langMap = {
+      en: 'en-IN',
+      hi: 'hi-IN',
+      te: 'te-IN',
+      ta: 'ta-IN'
+    };
+    const voiceLang = langMap[i18n.language] || 'en-IN';
+    setVoiceLanguage(voiceLang);
+    stopSpeaking();
+    setMessages([
+      {
+        role: 'assistant',
+        content: initialMessages[voiceLang] || initialMessages['en-IN']
+      }
+    ]);
+  }, [i18n.language]);
 
   // Reveal animations on scroll
   useEffect(() => {
@@ -531,11 +552,11 @@ Guidelines:
         <div className="section-header reveal">
           <div className="section-badge">
             <span className="badge-dot"></span>
-            AI Chat Advisor
+            {t('contact.badge')}
           </div>
-          <h2 className="section-title">AquaAdvisor Companion AI</h2>
+          <h2 className="section-title">{t('contact.title')}</h2>
           <p className="section-subtitle">
-            Get instant solutions to pond management, health emergencies, feeding optimization, and operational guidelines.
+            {t('contact.subtitle')}
           </p>
         </div>
 
@@ -562,10 +583,10 @@ Guidelines:
                   <span className="status-dot-compact online"></span>
                 </div>
                 <div className="chat-header-info">
-                  <h3 className="advisor-name-compact">AquaAdvisor AI</h3>
+                  <h3 className="advisor-name-compact">{t('contact.advisorName')}</h3>
                   <div className="connection-status-pill-compact">
                     <span className={`status-indicator-dot ${isConfigured ? 'active' : 'fallback'}`}></span>
-                    <span>{isConfigured ? 'Azure Live' : 'Simulated'}</span>
+                    <span>{isConfigured ? t('contact.live') : t('contact.simulated')}</span>
                   </div>
                 </div>
               </div>
@@ -578,6 +599,19 @@ Guidelines:
                     onChange={(e) => {
                       const newLang = e.target.value;
                       setVoiceLanguage(newLang);
+                      
+                      // Update i18n to match the selected voice language
+                      const i18nMap = {
+                        'en-IN': 'en',
+                        'hi-IN': 'hi',
+                        'te-IN': 'te',
+                        'ta-IN': 'ta'
+                      };
+                      const targetI18n = i18nMap[newLang];
+                      if (targetI18n && i18n.language !== targetI18n) {
+                        i18n.changeLanguage(targetI18n);
+                      }
+
                       stopSpeaking();
                       setMessages([
                         {
@@ -606,12 +640,12 @@ Guidelines:
                     }}
                     className="auto-speak-checkbox-compact"
                   />
-                  <span>Speak Answers</span>
+                  <span>{t('contact.speakAnswers')}</span>
                 </label>
 
                 {isSpeaking && (
                   <button className="stop-speech-btn-compact" onClick={stopSpeaking}>
-                    Stop
+                    {t('contact.stop')}
                   </button>
                 )}
 
@@ -626,7 +660,7 @@ Guidelines:
                     setChatError('');
                   }}
                 >
-                  Clear
+                  {t('contact.clear')}
                 </button>
               </div>
             </div>
@@ -697,14 +731,14 @@ Guidelines:
               <input
                 type="text"
                 className="chat-text-input"
-                placeholder={isListening ? "Listening..." : "Ask the advisor a question about your farm..."}
+                placeholder={isListening ? t('contact.micListening') : t('contact.placeholder')}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isLoading || isListening}
                 required
               />
               <button type="submit" className="chat-send-btn" disabled={isLoading || isListening || !input.trim()}>
-                {isLoading ? '...' : 'Send'}
+                {isLoading ? '...' : t('contact.send')}
               </button>
             </form>
           </div>

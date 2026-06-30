@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 function AnimatedCounter({ target, suffix = '', duration = 2000 }) {
   const [count, setCount] = useState(0);
@@ -40,11 +41,13 @@ function AnimatedCounter({ target, suffix = '', duration = 2000 }) {
 }
 
 export default function Stats() {
+  const { t } = useTranslation();
+
   const stats = [
-    { icon: '🐟', value: 50000, suffix: '+', label: 'Aqua Farms Managed' },
-    { icon: '🌊', value: 12, suffix: 'M+', label: 'Species Monitored' },
-    { icon: '📈', value: 98, suffix: '%', label: 'Client Satisfaction' },
-    { icon: '🌍', value: 45, suffix: '+', label: 'Countries Served' },
+    { icon: '🐟', value: 50000, suffix: '+', label: t('stats.farms') || 'Aqua Farms Managed' },
+    { icon: '🌊', value: 12, suffix: 'M+', label: t('stats.species') || 'Species Monitored' },
+    { icon: '📈', value: 98, suffix: '%', label: t('stats.satisfaction') || 'Client Satisfaction' },
+    { icon: '🌍', value: 45, suffix: '+', label: t('stats.countries') || 'Countries Served' },
   ];
 
   return (

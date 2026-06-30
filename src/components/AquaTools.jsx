@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function AquaTools() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('calculators'); // 'calculators' | 'diagnostics' | 'predictor'
   const [calcSubTab, setCalcSubTab] = useState('fcr'); // 'fcr' | 'density' | 'feed'
   const sectionRef = useRef(null);
@@ -624,12 +626,11 @@ export default function AquaTools() {
         <div className="section-header reveal">
           <div className="section-badge">
             <span className="badge-dot"></span>
-            Operational Dashboard
+            {t('tools.badge') || 'Operational Dashboard'}
           </div>
-          <h2 className="section-title">Farm Assistant Tools</h2>
+          <h2 className="section-title">{t('tools.title') || 'Farm Assistant Tools'}</h2>
           <p className="section-subtitle">
-            Maximize feed performance, estimate stocking capacities, and diagnose pond biometrics 
-            in real time with custom calculators designed for precision aquaculture.
+            {t('tools.subtitle') || 'Maximize feed performance, estimate stocking capacities, and diagnose pond biometrics in real time with custom calculators designed for precision aquaculture.'}
           </p>
         </div>
 
@@ -639,25 +640,25 @@ export default function AquaTools() {
             className={`tools-tab-btn ${activeTab === 'calculators' ? 'active' : ''}`}
             onClick={() => setActiveTab('calculators')}
           >
-            📊 Smart Calculators
+            📊 {t('tools.tabFcr') || 'Smart Calculators'}
           </button>
           <button
             className={`tools-tab-btn ${activeTab === 'diagnostics' ? 'active' : ''}`}
             onClick={() => setActiveTab('diagnostics')}
           >
-            🧪 Water Quality Diagnostics
+            🧪 {t('tools.tabDensity') || 'Water Quality Diagnostics'}
           </button>
           <button
             className={`tools-tab-btn ${activeTab === 'predictor' ? 'active' : ''}`}
             onClick={() => setActiveTab('predictor')}
           >
-            📈 Growth & Revenue Predictor
+            📈 {t('tools.tabBiomass') || 'Growth & Revenue Predictor'}
           </button>
           <button
             className={`tools-tab-btn ${activeTab === 'disease' ? 'active' : ''}`}
             onClick={() => setActiveTab('disease')}
           >
-            🩺 Disease Diagnostician
+            🩺 {t('tools.tabDisease') || 'Disease Diagnostician'}
           </button>
         </div>
 

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function PricePlanner() {
+  const { t } = useTranslation();
   const sectionRef = useRef(null);
 
   // Intersection Observer for scroll animations
@@ -71,11 +73,11 @@ export default function PricePlanner() {
         <div className="section-header reveal">
           <div className="section-badge">
             <span className="badge-dot"></span>
-            Savings Estimator
+            {t('pricing.badge') || 'Savings Estimator'}
           </div>
-          <h2 className="section-title">Free Savings & ROI Planner</h2>
+          <h2 className="section-title">{t('pricing.title') || 'Free Savings & ROI Planner'}</h2>
           <p className="section-subtitle">
-            AquaFuture is 100% free. Calculate your projected feed savings and crop retention gains to see how much profit goes directly back to your farm.
+            {t('pricing.subtitle') || 'AquaFuture is 100% free. Calculate your projected feed savings and crop retention gains to see how much profit goes directly back to your farm.'}
           </p>
         </div>
 
@@ -85,34 +87,34 @@ export default function PricePlanner() {
             {/* Step 1: Scale Audit */}
             <div className="planner-panel glass-card">
               <div className="panel-step-badge">Step 1</div>
-              <h3>Production Scale Audit</h3>
+              <h3>{t('pricePlanner.step1Title') || 'Production Scale Audit'}</h3>
               <p className="panel-intro-text">
-                Select your farm configurations to estimate your scale.
+                {t('pricePlanner.step1Desc') || 'Select your farm configurations to estimate your scale.'}
               </p>
 
               <div className="form-group-split">
                 <div className="form-group">
-                  <label>Species Cultured</label>
+                  <label>{t('pricePlanner.species') || 'Species Cultured'}</label>
                   <select value={species} onChange={(e) => handleScalePresetSelection(e.target.value)}>
-                    <option value="shrimp">White Shrimp (Penaeus vannamei)</option>
-                    <option value="finfish">Finfish (Tilapia, Salmon, Catfish)</option>
-                    <option value="seaweed">Seaweed (Kappaphycus, Kelp)</option>
+                    <option value="shrimp">{t('pricePlanner.shrimpOpt') || 'White Shrimp (Penaeus vannamei)'}</option>
+                    <option value="finfish">{t('pricePlanner.finfishOpt') || 'Finfish (Tilapia, Salmon, Catfish)'}</option>
+                    <option value="seaweed">{t('pricePlanner.seaweedOpt') || 'Seaweed (Kappaphycus, Kelp)'}</option>
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Facility Infrastructure</label>
+                  <label>{t('pricePlanner.infrastructure') || 'Facility Infrastructure'}</label>
                   <select value={facility} onChange={(e) => setFacility(e.target.value)}>
-                    <option value="pond">Semi-Intensive Ponds</option>
-                    <option value="ras">Recirculating Aquaculture (RAS)</option>
-                    <option value="cage">Open Coastal Sea Cages</option>
-                    <option value="hatchery">Hatchery / Breeding Tanks</option>
+                    <option value="pond">{t('pricePlanner.pondOpt') || 'Semi-Intensive Ponds'}</option>
+                    <option value="ras">{t('pricePlanner.rasOpt') || 'Recirculating Aquaculture (RAS)'}</option>
+                    <option value="cage">{t('pricePlanner.cageOpt') || 'Open Coastal Sea Cages'}</option>
+                    <option value="hatchery">{t('pricePlanner.hatcheryOpt') || 'Hatchery / Breeding Tanks'}</option>
                   </select>
                 </div>
               </div>
 
               <div className="form-group-split">
                 <div className="form-group">
-                  <label>Active Ponds/Tanks: {pondCount}</label>
+                  <label>{t('pricePlanner.activePonds') || 'Active Ponds/Tanks'}: {pondCount}</label>
                   <input
                     type="range"
                     min="1"
@@ -123,7 +125,7 @@ export default function PricePlanner() {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Target Yield: {annualYield} Quintals/yr</label>
+                  <label>{t('pricePlanner.targetYield') || 'Target Yield'}: {annualYield} Quintals/yr</label>
                   <input
                     type="range"
                     min="50"
@@ -139,15 +141,15 @@ export default function PricePlanner() {
             {/* Step 2: Cost Inputs */}
             <div className="planner-panel glass-card">
               <div className="panel-step-badge">Step 2</div>
-              <h3>Crop Expense Audits</h3>
+              <h3>{t('pricePlanner.step2Title') || 'Crop Expense Audits'}</h3>
               <p className="panel-intro-text">
-                Input your current operating feed and crop values to calculate savings.
+                {t('pricePlanner.step2Desc') || 'Input your current operating feed and crop values to calculate savings.'}
               </p>
 
               <div className="form-group-split">
                 <div className="form-group">
                   <div className="slider-label-row">
-                    <label>Weekly Feed Dispersed</label>
+                    <label>{t('pricePlanner.weeklyFeed') || 'Weekly Feed Dispersed'}</label>
                     <span className="slider-value">{weeklyFeed.toLocaleString('en-IN')} Quintals/wk</span>
                   </div>
                   <input
@@ -161,7 +163,7 @@ export default function PricePlanner() {
                 </div>
                 <div className="form-group">
                   <div className="slider-label-row">
-                    <label>Feed Price per Quintal</label>
+                    <label>{t('pricePlanner.feedPrice') || 'Feed Price per Quintal'}</label>
                     <span className="slider-value">₹{feedCostPerKg.toLocaleString('en-IN')} /qtl</span>
                   </div>
                   <input
@@ -177,7 +179,7 @@ export default function PricePlanner() {
 
               <div className="form-group">
                 <div className="slider-label-row">
-                  <label>Estimated Annual Crop Valuation</label>
+                  <label>{t('pricePlanner.annualCropVal') || 'Estimated Annual Crop Valuation'}</label>
                   <span className="slider-value text-bright">₹{annualCropValue.toLocaleString('en-IN')}</span>
                 </div>
                 <input
@@ -200,17 +202,17 @@ export default function PricePlanner() {
           <div className="planner-report-container">
             {/* Financial Savings Diagnostics */}
             <div className="planner-panel glass-card output-panel roi-dashboard-card">
-              <h3>Annual Profit Retained Dashboard</h3>
+              <h3>{t('pricePlanner.profitDashboard') || 'Annual Profit Retained Dashboard'}</h3>
               
               <div className="roi-metrics-grid">
                 <div className="roi-metric-box">
-                  <span className="roi-metric-label">Feed Savings (Annual)</span>
+                  <span className="roi-metric-label">{t('pricePlanner.feedSavings') || 'Feed Savings (Annual)'}</span>
                   <span className="roi-metric-value text-bright">₹{Math.round(feedSavingsAnnual).toLocaleString('en-IN')}</span>
                   <span className="roi-metric-desc">FCR waste lowered by 20%</span>
                 </div>
 
                 <div className="roi-metric-box">
-                  <span className="roi-metric-label">Crop Retention (Annual)</span>
+                  <span className="roi-metric-label">{t('pricePlanner.cropRetention') || 'Crop Retention (Annual)'}</span>
                   <span className="roi-metric-value text-bright">₹{Math.round(cropRetentionSavingsAnnual).toLocaleString('en-IN')}</span>
                   <span className="roi-metric-desc">Pathogen mortality cut by 11%</span>
                 </div>
@@ -218,17 +220,17 @@ export default function PricePlanner() {
 
               <div className="roi-net-summary">
                 <div className="net-savings-row">
-                  <span>Net Annual Profit Retained:</span>
+                  <span>{t('pricePlanner.netProfitRetained') || 'Net Annual Profit Retained'}:</span>
                   <span className="net-savings-value text-aqua">₹{Math.round(netSavingsAnnual).toLocaleString('en-IN')}</span>
                 </div>
                 <p className="roi-comparison-text">
-                  (Software cost is ₹0.00, meaning 100% of savings are direct farm profits)
+                  {t('pricePlanner.freeSoftwareNote') || '(Software cost is ₹0.00, meaning 100% of savings are direct farm profits)'}
                 </p>
                 
                 <div className="roi-progress-container">
                   <div className="roi-progress-label-row">
-                    <span>Net Profit Retention Rate</span>
-                    <strong>100% Return</strong>
+                    <span>{t('pricePlanner.retentionRate') || 'Net Profit Retention Rate'}</span>
+                    <strong>{t('pricePlanner.return') || '100% Return'}</strong>
                   </div>
                   <div className="roi-progress-track">
                     <div
@@ -237,7 +239,7 @@ export default function PricePlanner() {
                     ></div>
                   </div>
                   <span className="roi-verdict">
-                    🚀 <strong>100% Free Platform Benefit:</strong> By utilizing AquaFuture at no charge, your farm retains every single rupee of optimized feed and biological crop savings.
+                    🚀 <strong>{t('pricePlanner.benefit') || '100% Free Platform Benefit'}:</strong> {t('pricePlanner.benefitText') || 'By utilizing AquaFuture at no charge, your farm retains every single rupee of optimized feed and biological crop savings.'}
                   </span>
                 </div>
               </div>

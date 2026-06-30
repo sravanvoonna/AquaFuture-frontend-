@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function Hero() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const heroRef = useRef(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const handleMouse = (e) => {
@@ -55,40 +57,38 @@ export default function Hero() {
         <div className="hero-grid">
           <div className="hero-left">
             <h1 className="hero-title">
-              <span className="line1">Smart Solutions for</span>
+              <span className="line1">{t('hero.title1')}</span>
               <br />
-              <span className="highlight">Aqua Farming</span>
+              <span className="highlight">{t('hero.highlight')}</span>
             </h1>
 
             <p className="hero-description">
-              Harness the power of AI, IoT sensors, and real-time analytics to transform 
-              your aquaculture operations. From fish farming to shrimp culture — 
-              monitor, optimize, and scale your marine enterprise like never before.
+              {t('hero.description')}
             </p>
 
             <div className="hero-buttons">
               <button className="btn-primary" onClick={() => document.getElementById('services').scrollIntoView({ behavior: 'smooth' })}>
-                Explore Solutions
+                {t('hero.explore')}
                 <span>→</span>
               </button>
               <button className="btn-secondary" onClick={() => document.getElementById('about').scrollIntoView({ behavior: 'smooth' })}>
                 <span>▶</span>
-                Watch Demo
+                {t('hero.watchDemo')}
               </button>
             </div>
 
             <div className="hero-stats">
               <div className="hero-stat">
                 <div className="hero-stat-value">50K+</div>
-                <div className="hero-stat-label">Aqua Farms</div>
+                <div className="hero-stat-label">{t('hero.farms')}</div>
               </div>
               <div className="hero-stat">
                 <div className="hero-stat-value">98.5%</div>
-                <div className="hero-stat-label">Survival Rate</div>
+                <div className="hero-stat-label">{t('hero.survivalRate')}</div>
               </div>
               <div className="hero-stat">
                 <div className="hero-stat-value">40%</div>
-                <div className="hero-stat-label">Yield Increase</div>
+                <div className="hero-stat-label">{t('hero.yieldIncrease')}</div>
               </div>
             </div>
           </div>
