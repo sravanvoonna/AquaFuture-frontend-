@@ -533,10 +533,19 @@ IMPORTANT: The values for keys "phase", "desc" (inside timeline), "waterManageme
   const downloadSchedulerPdf = () => {
     if (!generatedPlan) return;
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      alert("Please allow popups to download the PDF report.");
-      return;
+    let printIframe = document.getElementById('aqua-print-iframe');
+    if (!printIframe) {
+      printIframe = document.createElement('iframe');
+      printIframe.id = 'aqua-print-iframe';
+      printIframe.style.position = 'fixed';
+      printIframe.style.right = '0';
+      printIframe.style.bottom = '0';
+      printIframe.style.width = '0';
+      printIframe.style.height = '0';
+      printIframe.style.border = 'none';
+      printIframe.style.zIndex = '-9999';
+      printIframe.style.pointerEvents = 'none';
+      document.body.appendChild(printIframe);
     }
 
     const htmlContent = `
@@ -552,55 +561,6 @@ IMPORTANT: The values for keys "phase", "desc" (inside timeline), "waterManageme
             padding: 40px;
             background-color: #ffffff;
             margin: 0;
-          }
-          @media print {
-            .no-print {
-              display: none !important;
-            }
-            body {
-              padding: 0 !important;
-            }
-          }
-          .action-bar {
-            display: flex;
-            gap: 15px;
-            background: #03254c;
-            padding: 15px 40px;
-            align-items: center;
-            justify-content: flex-start;
-            margin: -40px -40px 30px -40px;
-          }
-          .action-bar-title {
-            color: #ffffff;
-            font-size: 14px;
-            font-weight: 600;
-            margin-right: auto;
-            font-family: inherit;
-          }
-          .action-btn {
-            background: #00d4aa;
-            color: #03254c;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: background 0.2s;
-            font-family: inherit;
-          }
-          .action-btn:hover {
-            background: #00b894;
-          }
-          .action-btn.close-btn {
-            background: #334155;
-            color: #ffffff;
-          }
-          .action-btn.close-btn:hover {
-            background: #475569;
           }
           .header {
             display: flex;
@@ -742,16 +702,6 @@ IMPORTANT: The values for keys "phase", "desc" (inside timeline), "waterManageme
         </style>
       </head>
       <body>
-        <div class="no-print action-bar">
-          <span class="action-bar-title">AquaFuture Cultivation Advisory Report</span>
-          <button class="action-btn" onclick="window.print()">
-            📥 ${t('services.modal.downloadPdf') || 'Print / Save as PDF'}
-          </button>
-          <button class="action-btn close-btn" onclick="window.close()">
-            ${t('technology.eligibilityPopup.close') || 'Close'}
-          </button>
-        </div>
-
         <div class="header">
           <div class="title-area">
             <h1>AquaFuture Cultivation Plan</h1>
@@ -826,20 +776,19 @@ IMPORTANT: The values for keys "phase", "desc" (inside timeline), "waterManageme
           This cultivation advisory report is AI-generated for general guidance. Consult regional fisheries departments for local adjustments.<br>
           © ${new Date().getFullYear()} AquaFuture. All rights reserved.
         </div>
-
-        <script>
-          window.onload = function() {
-            setTimeout(function() {
-              window.print();
-            }, 300);
-          }
-        </script>
       </body>
       </html>
     `;
 
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+    const iframeDoc = printIframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(htmlContent);
+    iframeDoc.close();
+
+    setTimeout(() => {
+      printIframe.contentWindow.focus();
+      printIframe.contentWindow.print();
+    }, 500);
   };
 
 
