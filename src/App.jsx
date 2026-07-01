@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import LoginPage from './components/LoginPage';
 import LoadingScreen from './components/LoadingScreen';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -17,11 +18,16 @@ import DepthScale from './components/DepthScale';
 import BackToTop from './components/BackToTop';
 
 function App() {
+  const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const handleLoadingComplete = useCallback(() => {
     setLoading(false);
   }, []);
+
+  if (!authenticated) {
+    return <LoginPage onEnterSite={() => setAuthenticated(true)} />;
+  }
 
   return (
     <>
@@ -54,4 +60,5 @@ function App() {
 }
 
 export default App;
+
 
