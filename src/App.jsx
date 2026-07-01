@@ -1,6 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import LoginPage from './components/LoginPage';
-import LoadingScreen from './components/LoadingScreen';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import About from './components/About';
@@ -8,7 +7,7 @@ import Services from './components/Services';
 import SpeciesGallery from './components/SpeciesGallery';
 import Technology from './components/Technology';
 import Stats from './components/Stats';
-import AquaTools from './components/AquaTools'; // re-trigger HMR
+import AquaTools from './components/AquaTools';
 import PricePlanner from './components/PricePlanner';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
@@ -19,42 +18,35 @@ import BackToTop from './components/BackToTop';
 
 function App() {
   const [authenticated, setAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  const handleLoadingComplete = useCallback(() => {
-    setLoading(false);
-  }, []);
-
-  if (!authenticated) {
-    return <LoginPage onEnterSite={() => setAuthenticated(true)} />;
-  }
 
   return (
     <>
-      {loading && <LoadingScreen onComplete={handleLoadingComplete} />}
-      
-      {!loading && (
-        <>
-          <div className="global-bg-gradient" />
-          <UnderwaterCanvas />
-          <ParticlesOverlay />
-          <DepthScale />
-          <Navbar />
-          <main>
-            <Hero />
-            <About />
-            <Services />
-            <SpeciesGallery />
-            <Technology />
-            <Stats />
-            <AquaTools />
-            <PricePlanner />
-            <Contact />
-          </main>
-          <Footer />
-          <BackToTop />
-        </>
+      {/* Login overlay — removed once authenticated */}
+      {!authenticated && (
+        <LoginPage onEnterSite={() => setAuthenticated(true)} />
       )}
+
+      {/* Main site always mounts — hidden behind login, preloads while user is on auth page */}
+      <div style={{ display: authenticated ? 'block' : 'none' }}>
+        <div className="global-bg-gradient" />
+        <UnderwaterCanvas />
+        <ParticlesOverlay />
+        <DepthScale />
+        <Navbar />
+        <main>
+          <Hero />
+          <About />
+          <Services />
+          <SpeciesGallery />
+          <Technology />
+          <Stats />
+          <AquaTools />
+          <PricePlanner />
+          <Contact />
+        </main>
+        <Footer />
+        <BackToTop />
+      </div>
     </>
   );
 }
