@@ -352,10 +352,13 @@ export default {
     footer: {
       tagline: "Next-generation smart aquaculture platform powered by AI, IoT, and blockchain technology. Helping aqua farmers worldwide build sustainable, profitable operations.",
       developer: "Developer Profile",
+      developerDesc: "Cerevyn Solutions harnesses the power of artificial intelligence to transform industries, enrich lives, and create intelligent solutions for healthcare, education, and business operations worldwide.",
       office: "Office Location",
+      address: "THub, Knowledge City, Serilingampalle (M), Hyderabad, Telangana 500085",
       getInTouch: "Get in Touch",
       websiteServices: "Website & Services",
       hours: "Hours",
+      closed: "Closed · Opens 9am",
       googleReviews: "Google Reviews",
       copyright: "© {{year}} AquaFuture. All rights reserved. Developed by Cerevyn Solutions Private Limited.",
       privacy: "Privacy Policy",
