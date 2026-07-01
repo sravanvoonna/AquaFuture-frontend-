@@ -89,11 +89,10 @@ class Fish {
         this.vx += dx * strength;
         this.vy += dy * strength;
       } else if (dist < 30) {
-        // too close — gently disperse
         this.vx -= dx * 0.01;
         this.vy -= dy * 0.01;
       }
-      // Simple boid: avoid crowding other fish
+      // Avoid crowding other fish
       for (const f of allFish) {
         if (f === this) continue;
         const fdx = this.x - f.x;
@@ -107,13 +106,10 @@ class Fish {
     }
     // ── Idle schooling ──
     else {
-      // Gentle wander + schooling
       this.vx += (Math.random() - 0.5) * 0.15;
       this.vy += (Math.random() - 0.5) * 0.1;
-      // Slight schooling toward center
       this.vx += (this.w / 2 - this.x) * 0.0002;
       this.vy += (this.h / 2 - this.y) * 0.0002;
-      // Avoid crowding
       for (const f of allFish) {
         if (f === this) continue;
         const fdx = this.x - f.x;
@@ -126,7 +122,6 @@ class Fish {
       }
     }
 
-    // Speed limit
     const speed = Math.hypot(this.vx, this.vy);
     const limit = mode === 'scatter' ? 10 : this.maxSpeed;
     if (speed > limit) {
@@ -134,7 +129,6 @@ class Fish {
       this.vy = (this.vy / speed) * limit;
     }
 
-    // Friction
     if (mode !== 'scatter') {
       this.vx *= 0.985;
       this.vy *= 0.985;
@@ -143,14 +137,12 @@ class Fish {
     this.x += this.vx;
     this.y += this.vy;
 
-    // Bounce with padding
     const pad = this.size * 1.5;
     if (this.x < pad) { this.x = pad; this.vx = Math.abs(this.vx) * 0.8; }
     if (this.x > this.w - pad) { this.x = this.w - pad; this.vx = -Math.abs(this.vx) * 0.8; }
     if (this.y < pad) { this.y = pad; this.vy = Math.abs(this.vy) * 0.8; }
     if (this.y > this.h - pad) { this.y = this.h - pad; this.vy = -Math.abs(this.vy) * 0.8; }
 
-    // Smooth angle
     if (speed > 0.3) {
       this.targetAngle = Math.atan2(this.vy, this.vx);
     }
@@ -247,7 +239,6 @@ class Fish {
     ctx.arc(s * 0.38, -s * 0.08, s * 0.1, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
     ctx.fill();
-    // iris
     const ig = ctx.createRadialGradient(s * 0.39, -s * 0.085, 0, s * 0.38, -s * 0.08, s * 0.07);
     ig.addColorStop(0, '#0a0a18');
     ig.addColorStop(0.6, '#1a2240');
@@ -256,12 +247,10 @@ class Fish {
     ctx.arc(s * 0.39, -s * 0.08, s * 0.065, 0, Math.PI * 2);
     ctx.fillStyle = ig;
     ctx.fill();
-    // pupil
     ctx.beginPath();
     ctx.arc(s * 0.395, -s * 0.08, s * 0.035, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(0,0,0,0.95)';
     ctx.fill();
-    // catchlight
     ctx.beginPath();
     ctx.arc(s * 0.42, -s * 0.1, s * 0.018, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(255,255,255,0.95)';
@@ -330,7 +319,6 @@ class Bubble {
     ctx.strokeStyle = 'rgba(120, 200, 255, 0.25)';
     ctx.lineWidth = 0.7;
     ctx.stroke();
-    // highlight
     ctx.beginPath();
     ctx.arc(this.x - this.r * 0.3, this.y - this.r * 0.3, this.r * 0.3, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(200, 240, 255, 0.2)';
@@ -338,10 +326,30 @@ class Bubble {
   }
 }
 
+// ─── Caustic light pattern generator ─────────────────────────────────────────
+function drawCaustics(ctx, w, h, time) {
+  ctx.save();
+  ctx.globalAlpha = 0.025;
+  for (let i = 0; i < 15; i++) {
+    const cx = (Math.sin(time * 0.3 + i * 0.7) * 0.5 + 0.5) * w;
+    const cy = (Math.sin(time * 0.2 + i * 1.1) * 0.5 + 0.5) * h * 0.65;
+    const r = 25 + Math.sin(time * 0.4 + i) * 15;
+    const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    cg.addColorStop(0, 'rgba(0, 212, 170, 0.6)');
+    cg.addColorStop(0.5, 'rgba(0, 180, 255, 0.2)');
+    cg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = cg;
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Component
 // ═══════════════════════════════════════════════════════════════════════════════
-export default function LoginPage({ onEnterSite }) {
+export default function LoginPage({ onEnterSite, message, onClearMessage }) {
   const canvasRef = useRef(null);
   const fishRef = useRef([]);
   const planktonRef = useRef([]);
@@ -439,23 +447,8 @@ export default function LoginPage({ onEnterSite }) {
       }
       ctx.restore();
 
-      // ── Caustic patterns ──
-      ctx.save();
-      ctx.globalAlpha = 0.025;
-      for (let i = 0; i < 15; i++) {
-        const cx = (Math.sin(t * 0.3 + i * 0.7) * 0.5 + 0.5) * w;
-        const cy = (Math.sin(t * 0.2 + i * 1.1) * 0.5 + 0.5) * h * 0.65;
-        const r = 25 + Math.sin(t * 0.4 + i) * 15;
-        const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-        cg.addColorStop(0, 'rgba(0, 212, 170, 0.6)');
-        cg.addColorStop(0.5, 'rgba(0, 180, 255, 0.2)');
-        cg.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.fillStyle = cg;
-        ctx.fill();
-      }
-      ctx.restore();
+      // ── Caustics ──
+      drawCaustics(ctx, w, h, t);
 
       // ── Vignette ──
       const vig = ctx.createRadialGradient(w / 2, h / 2, h * 0.25, w / 2, h / 2, h * 0.9);
@@ -516,7 +509,6 @@ export default function LoginPage({ onEnterSite }) {
     setSubmitting(true);
     modeRef.current = 'celebrate';
     setTimeout(() => {
-      // Issue JWT token
       const name = loginData.email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
       const user = { email: loginData.email, name };
       const token = createToken(user);
@@ -537,7 +529,6 @@ export default function LoginPage({ onEnterSite }) {
     setSubmitting(true);
     modeRef.current = 'celebrate';
     setTimeout(() => {
-      // Issue JWT token for new account
       const user = { email: signupData.email, name: signupData.name };
       const token = createToken(user);
       saveToken(token);
@@ -603,6 +594,14 @@ export default function LoginPage({ onEnterSite }) {
           {/* Card */}
           <div className="login-card">
             <div className="login-card-glow" />
+
+            {message && (
+              <div className="login-message-alert">
+                <span className="login-message-icon">⚠️</span>
+                <span className="login-message-text">{message}</span>
+                <button type="button" className="login-message-close" onClick={onClearMessage}>×</button>
+              </div>
+            )}
 
             {done ? (
               <div className="login-success">
@@ -695,9 +694,7 @@ export default function LoginPage({ onEnterSite }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Scoped CSS — uses the same design tokens as the main AquaFuture site
-// ═══════════════════════════════════════════════════════════════════════════════
+// Scoped CSS
 const loginCSS = `
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -710,7 +707,6 @@ const loginCSS = `
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* ── Aquarium ── */
 .login-aquarium {
   flex: 0 0 52%;
   position: relative;
@@ -723,7 +719,6 @@ const loginCSS = `
   cursor: none;
 }
 
-/* overlays */
 .aqua-overlay-top {
   position: absolute; top: 20px; left: 20px; right: 20px;
   display: flex; gap: 10px; align-items: center;
@@ -777,7 +772,6 @@ const loginCSS = `
   color: rgba(0, 212, 170, 0.08);
 }
 
-/* ── Auth panel ── */
 .login-panel {
   flex: 0 0 48%;
   display: flex; flex-direction: column;
@@ -801,7 +795,6 @@ const loginCSS = `
   background: radial-gradient(circle, rgba(0, 140, 255, 0.05) 0%, transparent 70%);
 }
 
-/* Brand */
 .login-brand {
   text-align: center; margin-bottom: 32px;
 }
@@ -831,7 +824,6 @@ const loginCSS = `
   letter-spacing: 2.5px; text-transform: uppercase;
 }
 
-/* Tabs */
 .login-tabs {
   display: flex; width: 100%; max-width: 400px;
   background: rgba(255,255,255,0.03);
@@ -859,7 +851,6 @@ const loginCSS = `
   background: rgba(255,255,255,0.03);
 }
 
-/* Card */
 .login-card {
   width: 100%; max-width: 400px;
   background: rgba(255,255,255,0.04);
@@ -879,7 +870,42 @@ const loginCSS = `
   background: linear-gradient(90deg, transparent, rgba(0, 212, 170, 0.4), transparent);
 }
 
-/* Fields */
+.login-message-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 100, 100, 0.08);
+  border: 1px solid rgba(255, 100, 100, 0.25);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+}
+.login-message-icon {
+  font-size: 1.1rem;
+}
+.login-message-text {
+  font-size: 0.8rem;
+  color: rgba(255, 200, 200, 0.85);
+  line-height: 1.4;
+  font-weight: 500;
+}
+.login-message-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: rgba(255, 200, 200, 0.5);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.login-message-close:hover {
+  color: rgba(255, 200, 200, 0.95);
+}
+
 .login-field {
   margin-bottom: 16px;
 }
@@ -954,7 +980,6 @@ input:-webkit-autofill:focus {
   text-align: center; font-weight: 500;
 }
 
-/* Submit */
 .login-submit {
   width: 100%; padding: 13px;
   background: linear-gradient(135deg, #00d4aa, #0b5394);
@@ -990,7 +1015,6 @@ input:-webkit-autofill:focus {
   animation: spin 0.7s linear infinite;
 }
 
-/* Success */
 .login-success {
   text-align: center; padding: 20px 0;
 }
@@ -1029,7 +1053,6 @@ input:-webkit-autofill:focus {
   font-size: 0.7rem; text-align: center;
 }
 
-/* Animations */
 @keyframes pulseDot {
   0%, 100% { opacity: 1; box-shadow: 0 0 6px #00d4aa; }
   50% { opacity: 0.3; box-shadow: 0 0 2px #00d4aa; }
@@ -1041,7 +1064,6 @@ input:-webkit-autofill:focus {
   from { transform: rotate(0deg); } to { transform: rotate(360deg); }
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .login-root { flex-direction: column; }
   .login-aquarium { flex: 0 0 40%; }

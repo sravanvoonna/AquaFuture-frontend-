@@ -30,7 +30,9 @@ const WARN_AT_SECS = 60;                 // show warning toast at 60 s remaining
 function App() {
   const [user, setUser] = useState(null);          // { name, email } or null
   const [showToast, setShowToast] = useState(false); // inactivity warning toast
+  const [logoutMessage, setLogoutMessage] = useState(''); // timeout message
   const lastActivity = useRef(Date.now());
+  const lastRefreshTime = useRef(Date.now());
   const idleTimer = useRef(null);
   const countdownRef = useRef(null);
   const [countdown, setCountdown] = useState(0);
@@ -38,13 +40,20 @@ function App() {
   // ── On mount: restore session from stored JWT ────────────────────────────
   useEffect(() => {
     const stored = getCurrentUser();
-    if (stored) setUser({ name: stored.name, email: stored.email });
+    if (stored) {
+      setUser({ name: stored.name, email: stored.email });
+    }
   }, []);
 
   // ── Activity tracking + idle timer ──────────────────────────────────────
   const resetIdle = useCallback(() => {
-    lastActivity.current = Date.now();
-    refreshToken();
+    const now = Date.now();
+    lastActivity.current = now;
+    // Throttle refreshToken to run at most once every 15 seconds to protect performance
+    if (now - lastRefreshTime.current > 15000) {
+      refreshToken();
+      lastRefreshTime.current = now;
+    }
     setShowToast(false);
     clearInterval(countdownRef.current);
   }, []);
@@ -56,7 +65,9 @@ function App() {
     clearInterval(countdownRef.current);
     clearInterval(idleTimer.current);
     if (reason === 'timeout') {
-      // brief flash message handled by toast system
+      setLogoutMessage('You have been logged out due to 15 minutes of inactivity.');
+    } else {
+      setLogoutMessage('');
     }
   }, []);
 
@@ -99,7 +110,10 @@ function App() {
     };
   }, [user, resetIdle, logout]);
 
-  const handleLogin = (u) => setUser(u);
+  const handleLogin = (u) => {
+    setUser(u);
+    setLogoutMessage('');
+  };
 
   const authenticated = !!user;
 
@@ -107,7 +121,11 @@ function App() {
     <>
       {/* Login overlay */}
       {!authenticated && (
-        <LoginPage onEnterSite={handleLogin} />
+        <LoginPage
+          onEnterSite={handleLogin}
+          message={logoutMessage}
+          onClearMessage={() => setLogoutMessage('')}
+        />
       )}
 
       {/* Main site — always mounted, hidden until auth */}
