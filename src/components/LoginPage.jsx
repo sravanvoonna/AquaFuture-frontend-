@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createToken, saveToken } from '../utils/auth';
 
 /* ══════════════════════════════════════════════════════════════════════════════
    AquaFuture Login Page
@@ -515,9 +516,14 @@ export default function LoginPage({ onEnterSite }) {
     setSubmitting(true);
     modeRef.current = 'celebrate';
     setTimeout(() => {
+      // Issue JWT token
+      const name = loginData.email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const user = { email: loginData.email, name };
+      const token = createToken(user);
+      saveToken(token);
       setSubmitting(false);
       setDone(true);
-      setTimeout(() => { modeRef.current = 'idle'; if (onEnterSite) onEnterSite(); }, 1800);
+      setTimeout(() => { modeRef.current = 'idle'; if (onEnterSite) onEnterSite(user); }, 1800);
     }, 1500);
   };
 
@@ -531,9 +537,13 @@ export default function LoginPage({ onEnterSite }) {
     setSubmitting(true);
     modeRef.current = 'celebrate';
     setTimeout(() => {
+      // Issue JWT token for new account
+      const user = { email: signupData.email, name: signupData.name };
+      const token = createToken(user);
+      saveToken(token);
       setSubmitting(false);
       setDone(true);
-      setTimeout(() => { modeRef.current = 'idle'; setTab('login'); setDone(false); }, 2000);
+      setTimeout(() => { modeRef.current = 'idle'; if (onEnterSite) onEnterSite(user); }, 2000);
     }, 1500);
   };
 
